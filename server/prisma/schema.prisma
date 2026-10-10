@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -10,4 +5,71 @@ generator client {
 
 datasource db {
   provider = "mysql"
+}
+
+model Player {
+  puuid         String   @id @db.VarChar(78)
+  gameName      String
+  tagLine       String
+  profileIconId Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  participations MatchParticipant[]
+  rankSnapshots  RankSnapshot[]
+}
+
+model Champion {
+  id   Int    @id
+  key  String @unique
+  name String
+
+  participations MatchParticipant[]
+}
+
+model Match {
+  matchId      String   @id @db.VarChar(30)
+  queueId      Int
+  gameCreation DateTime
+  gameDuration Int
+
+  participants MatchParticipant[]
+
+  @@index([gameCreation])
+}
+
+model MatchParticipant {
+  id           Int     @id @default(autoincrement())
+  matchId      String  @db.VarChar(30)
+  puuid        String  @db.VarChar(78)
+  championId   Int
+  teamPosition String
+  win          Boolean
+  kills        Int
+  deaths       Int
+  assists      Int
+  cs           Int
+  visionScore  Int
+
+  match    Match    @relation(fields: [matchId], references: [matchId], onDelete: Cascade)
+  player   Player   @relation(fields: [puuid], references: [puuid])
+  champion Champion @relation(fields: [championId], references: [id])
+
+  @@unique([matchId, puuid])
+}
+
+model RankSnapshot {
+  id           Int      @id @default(autoincrement())
+  puuid        String   @db.VarChar(78)
+  queueType    String
+  tier         String
+  rank         String
+  leaguePoints Int
+  wins         Int
+  losses       Int
+  takenAt      DateTime @default(now())
+
+  player Player @relation(fields: [puuid], references: [puuid])
+
+  @@index([puuid, takenAt])
 }
