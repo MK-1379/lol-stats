@@ -63,6 +63,11 @@ const leagueEntriesSchema = z.array(
   }),
 );
 
+const summonerSchema = z.object({
+  profileIconId: z.number(),
+  summonerLevel: z.number(),
+});
+
 export type RiotAccount = z.infer<typeof accountSchema>;
 export type RiotMatch = z.infer<typeof matchSchema>;
 
@@ -86,4 +91,9 @@ export function getMatch(matchId: string) {
 export function getRankEntries(puuid: string) {
   const url = `${PLATFORM}/lol/league/v4/entries/by-puuid/${puuid}`;
   return riotFetch(url, leagueEntriesSchema);
+}
+
+export function getSummoner(puuid: string) {
+  const url = `${PLATFORM}/lol/summoner/v4/summoners/by-puuid/${puuid}`;
+  return riotFetch(url, summonerSchema);
 }
