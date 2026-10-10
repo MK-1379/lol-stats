@@ -1,11 +1,17 @@
-import { env } from "../config/env.js";
+import {
+  getAccountByRiotId,
+  getMatchIds,
+  getMatch,
+  getRankEntries,
+} from "../riot/riotClient.js";
 
-const url =
-  "https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/M0n0kuum44/SSJ";
+const account = await getAccountByRiotId("M0n0kuum44", "SSJ");
+const ids = await getMatchIds(account.puuid, 3);
+console.log("Últimas partidas:", ids);
 
-const response = await fetch(url, {
-  headers: { "X-Riot-Token": env.RIOT_API_KEY },
-});
+const match = await getMatch(ids[0]);
+const me = match.info.participants.find((p) => p.puuid === account.puuid);
+console.log(me);
 
-console.log("Status:", response.status);
-console.log(await response.json());
+const ranks = await getRankEntries(account.puuid);
+console.log(ranks);
