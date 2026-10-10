@@ -16,6 +16,16 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  api:
+    build: ./server
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   db-data:
