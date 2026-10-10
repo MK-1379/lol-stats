@@ -33,6 +33,13 @@ services:
     depends_on:
       db:
         condition: service_healthy
+  web:
+    build: ./web
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      - api
 
 volumes:
   db-data:
