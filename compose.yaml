@@ -26,6 +26,13 @@ services:
     depends_on:
       db:
         condition: service_healthy
+  worker:
+    build: ./server
+    command: ["node", "dist/worker.js"]
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   db-data:
