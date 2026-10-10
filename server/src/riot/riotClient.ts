@@ -10,10 +10,35 @@ export class RiotApiError extends Error {
   }
 }
 
-async function riotFetch<T>(url: string, schema: z.ZodType<T>): Promise<T> {
+const MAX_RETRIES = 3;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function riotFetch<T>(
+  url: string,
+  schema: z.ZodType<T>,
+  attempt = 0,
+): Promise<T> {
   const response = await fetch(url, {
     headers: { "X-Riot-Token": env.RIOT_API_KEY },
   });
+
+  const canRetry = attempt < MAX_RETRIES;
+
+  if (response.status === 429 && canRetry) {
+    const retryAfter = Number(response.headers.get("Retry-After") ?? "1");
+    console.warn(`[riot] 429: esperando ${retryAfter}s antes de reintentar`);
+    await sleep(retryAfter * 1000);
+    return riotFetch(url, schema, attempt + 1);
+  }
+
+  if (response.status >= 500 && canRetry) {
+    await sleep(2 ** attempt * 1000);
+    return riotFetch(url, schema, attempt + 1);
+  }
+
   if (!response.ok) {
     throw new RiotApiError(response.status, url);
   }
