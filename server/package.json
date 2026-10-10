@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "type": "commonjs",
+  "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
@@ -17,7 +17,8 @@
     "@prisma/client": "^7.10.0",
     "dotenv": "^18.0.7",
     "express": "^5.3.0",
-    "node-cron": "^4.6.0"
+    "node-cron": "^4.6.0",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
