@@ -1,13 +1,13 @@
-# Etapa 1: compilar TypeScript
 FROM node:24-alpine AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
-COPY tsconfig.json ./
+COPY tsconfig.json prisma7.config.ts ./
+COPY prisma ./prisma
+RUN npx prisma generate
 COPY src ./src
 RUN npm run build
 
-# Etapa 2: imagen final, solo con lo necesario para ejecutar
 FROM node:24-alpine
 WORKDIR /app
 ENV NODE_ENV=production

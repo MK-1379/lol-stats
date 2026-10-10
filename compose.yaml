@@ -21,6 +21,10 @@ services:
     restart: unless-stopped
     environment:
       PORT: 3000
+      DATABASE_URL: mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@db:3306/${MYSQL_DATABASE}
+      RIOT_API_KEY: ${RIOT_API_KEY}
+      RIOT_GAME_NAME: ${RIOT_GAME_NAME}
+      RIOT_TAG_LINE: ${RIOT_TAG_LINE}
     ports:
       - "127.0.0.1:3000:3000"
     depends_on:
@@ -30,6 +34,11 @@ services:
     build: ./server
     command: ["node", "dist/worker.js"]
     restart: unless-stopped
+    environment:
+      DATABASE_URL: mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@db:3306/${MYSQL_DATABASE}
+      RIOT_API_KEY: ${RIOT_API_KEY}
+      RIOT_GAME_NAME: ${RIOT_GAME_NAME}
+      RIOT_TAG_LINE: ${RIOT_TAG_LINE}
     depends_on:
       db:
         condition: service_healthy
