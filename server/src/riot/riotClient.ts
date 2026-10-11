@@ -45,7 +45,6 @@ async function riotFetch<T>(
   return schema.parse(await response.json());
 }
 
-// --- Esquemas: solo los campos que se usan ---
 const accountSchema = z.object({
   puuid: z.string(),
   gameName: z.string(),
@@ -54,6 +53,12 @@ const accountSchema = z.object({
 
 const participantSchema = z.object({
   puuid: z.string(),
+  riotIdGameName: z.string().default(""),
+  riotIdTagline: z.string().default(""),
+  teamId: z.number(),
+  champLevel: z.number(),
+  goldEarned: z.number(),
+  totalDamageDealtToChampions: z.number(),
   championId: z.number(),
   championName: z.string(),
   teamPosition: z.string(),
@@ -76,7 +81,6 @@ const matchSchema = z.object({
   }),
 });
 
-// esquema del rango
 const leagueEntriesSchema = z.array(
   z.object({
     queueType: z.string(),
@@ -96,7 +100,6 @@ const summonerSchema = z.object({
 export type RiotAccount = z.infer<typeof accountSchema>;
 export type RiotMatch = z.infer<typeof matchSchema>;
 
-// --- Funciones públicas ---
 export function getAccountByRiotId(gameName: string, tagLine: string) {
   const url = `${REGIONAL}/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`;
   return riotFetch(url, accountSchema);
@@ -112,7 +115,6 @@ export function getMatch(matchId: string) {
   return riotFetch(url, matchSchema);
 }
 
-// función del rango (usa PLATFORM, no REGIONAL)
 export function getRankEntries(puuid: string) {
   const url = `${PLATFORM}/lol/league/v4/entries/by-puuid/${puuid}`;
   return riotFetch(url, leagueEntriesSchema);

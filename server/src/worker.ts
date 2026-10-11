@@ -2,6 +2,7 @@ import cron from "node-cron";
 import { env } from "./config/env.js";
 import { syncChampions } from "./sync/syncChampions.js";
 import { syncPlayer } from "./sync/syncPlayer.js";
+import { syncScoreboards } from "./sync/scoreboard.js";
 
 async function runChampionSync() {
   try {
@@ -18,6 +19,10 @@ async function runPlayerSync() {
     console.log(
       `[worker] ${new Date().toISOString()} partidas nuevas: ${result.newMatches}`,
     );
+    const scoreboards = await syncScoreboards();
+    if (scoreboards.filled > 0) {
+      console.log(`[worker] Marcadores completados: ${scoreboards.filled}`);
+    }
   } catch (error) {
     console.error("[worker] Error sincronizando el jugador:", error);
   }

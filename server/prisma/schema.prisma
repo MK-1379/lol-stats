@@ -24,7 +24,8 @@ model Champion {
   key  String @unique
   name String
 
-  participations MatchParticipant[]
+  participations    MatchParticipant[]
+  scoreboardEntries ScoreboardEntry[]
 }
 
 model Match {
@@ -34,6 +35,7 @@ model Match {
   gameDuration Int
 
   participants MatchParticipant[]
+  scoreboard   ScoreboardEntry[]
 
   @@index([gameCreation])
 }
@@ -53,6 +55,31 @@ model MatchParticipant {
 
   match    Match    @relation(fields: [matchId], references: [matchId], onDelete: Cascade)
   player   Player   @relation(fields: [puuid], references: [puuid])
+  champion Champion @relation(fields: [championId], references: [id])
+
+  @@unique([matchId, puuid])
+}
+
+model ScoreboardEntry {
+  id                Int     @id @default(autoincrement())
+  matchId           String  @db.VarChar(30)
+  puuid             String  @db.VarChar(78)
+  gameName          String
+  tagLine           String
+  championId        Int
+  teamId            Int
+  teamPosition      String
+  win               Boolean
+  champLevel        Int
+  kills             Int
+  deaths            Int
+  assists           Int
+  cs                Int
+  visionScore       Int
+  goldEarned        Int
+  damageToChampions Int
+
+  match    Match    @relation(fields: [matchId], references: [matchId], onDelete: Cascade)
   champion Champion @relation(fields: [championId], references: [id])
 
   @@unique([matchId, puuid])

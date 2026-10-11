@@ -23,7 +23,6 @@ export function sumKda() {
   });
 }
 
-// Partidas, muertes, etc. agrupadas por campeón (GROUP BY championId)
 export function statsByChampion() {
   return prisma.matchParticipant.groupBy({
     by: ["championId"],
@@ -42,6 +41,13 @@ export function winsByChampion() {
 
 export function findChampionsByIds(ids: number[]) {
   return prisma.champion.findMany({ where: { id: { in: ids } } });
+}
+
+export function findScoreboard(matchId: string) {
+  return prisma.scoreboardEntry.findMany({
+    where: { matchId },
+    include: { champion: true },
+  });
 }
 
 export function findLastMatches(last: number) {

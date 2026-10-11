@@ -9,7 +9,6 @@ const envSchema = z.object({
   RIOT_GAME_NAME: z.string().min(1),
   RIOT_TAG_LINE: z.string().min(1),
   PORT: z.coerce.number().int().default(3000),
-  // Orígenes del frontend que pueden llamar a la API, separados por comas
   CORS_ORIGINS: z.string().default("http://localhost:5173,http://localhost:8080"),
 });
 

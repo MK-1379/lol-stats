@@ -1,7 +1,6 @@
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Sustituimos los repositorios por funciones falsas: los tests no tocan MySQL
 vi.mock("../repositories/matchRepository.js", () => ({
   findMatches: vi.fn(),
   countMatches: vi.fn(),
@@ -11,6 +10,7 @@ vi.mock("../repositories/matchRepository.js", () => ({
   winsByChampion: vi.fn(),
   findChampionsByIds: vi.fn(),
   findLastMatches: vi.fn(),
+  findScoreboard: vi.fn(),
 }));
 
 vi.mock("../repositories/playerRepository.js", () => ({
@@ -87,6 +87,61 @@ describe("API REST", () => {
     expect(response.body).toEqual([
       { championId: 89, champion: "Leona", games: 4, wins: 3, winrate: 75, kda: 5.5 },
     ]);
+  });
+
+  it("GET /api/matches/:id/scoreboard rechaza un id con formato no válido", async () => {
+    const response = await request(app).get("/api/matches/abc;DROP/scoreboard");
+
+    expect(response.status).toBe(400);
+    expect(matchRepository.findScoreboard).not.toHaveBeenCalled();
+  });
+
+  it("GET /api/matches/:id/scoreboard responde 404 si la partida no tiene marcador", async () => {
+    vi.mocked(matchRepository.findScoreboard).mockResolvedValue([]);
+    vi.mocked(playerRepository.findPlayer).mockResolvedValue(null);
+
+    const response = await request(app).get("/api/matches/EUW1_123/scoreboard");
+
+    expect(response.status).toBe(404);
+  });
+
+  it("GET /api/matches/:id/scoreboard pone primero mi equipo y ordena por posición", async () => {
+    const entry = (puuid: string, teamId: number, teamPosition: string, win: boolean) => ({
+      id: 1,
+      matchId: "EUW1_123",
+      puuid,
+      gameName: puuid,
+      tagLine: "EUW",
+      championId: 89,
+      teamId,
+      teamPosition,
+      win,
+      champLevel: 14,
+      kills: 2,
+      deaths: 2,
+      assists: 6,
+      cs: 30,
+      visionScore: 40,
+      goldEarned: 9000,
+      damageToChampions: 12000,
+      champion: { id: 89, key: "Leona", name: "Leona" },
+    });
+    vi.mocked(matchRepository.findScoreboard).mockResolvedValue([
+      entry("rival", 100, "TOP", true),
+      entry("aliado", 200, "MIDDLE", false),
+      entry("yo", 200, "UTILITY", false),
+    ] as never);
+    vi.mocked(playerRepository.findPlayer).mockResolvedValue({ puuid: "yo" } as never);
+
+    const response = await request(app).get("/api/matches/EUW1_123/scoreboard");
+
+    expect(response.status).toBe(200);
+    const [myTeam, enemyTeam] = response.body.teams;
+    expect(myTeam).toMatchObject({ teamId: 200, isMyTeam: true, win: false, kills: 4 });
+    expect(myTeam.players.map((p: { gameName: string }) => p.gameName)).toEqual(["aliado", "yo"]);
+    expect(myTeam.players[1]).toMatchObject({ isMe: true, kda: 4 });
+    expect(enemyTeam).toMatchObject({ teamId: 100, isMyTeam: false, win: true });
+    expect(response.body.teams[0].players[0]).not.toHaveProperty("puuid");
   });
 
   it("una ruta que no existe responde 404", async () => {

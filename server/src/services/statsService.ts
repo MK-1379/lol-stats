@@ -2,9 +2,7 @@ import { HttpError } from "../middlewares/errorHandler.js";
 import * as matchRepository from "../repositories/matchRepository.js";
 import * as playerRepository from "../repositories/playerRepository.js";
 
-// --- Cálculos reutilizables ---
 export function calculateKda(kills: number, deaths: number, assists: number) {
-  // Si no has muerto, dividimos entre 1 para no dividir entre 0
   return round((kills + assists) / Math.max(1, deaths));
 }
 
@@ -17,20 +15,17 @@ function round(value: number, decimals = 2) {
   return Math.round(value * factor) / factor;
 }
 
-// Convierte "DIAMOND IV 18 LP" en un único número que se puede dibujar en una gráfica
 const TIERS = ["IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "EMERALD", "DIAMOND"];
 const DIVISIONS = ["IV", "III", "II", "I"];
 
 export function toTotalLp(tier: string, rank: string, leaguePoints: number) {
   const tierIndex = TIERS.indexOf(tier);
   if (tierIndex === -1) {
-    // MASTER, GRANDMASTER y CHALLENGER no tienen divisiones
     return TIERS.length * 400 + leaguePoints;
   }
   return tierIndex * 400 + DIVISIONS.indexOf(rank) * 100 + leaguePoints;
 }
 
-// --- Casos de uso de la API ---
 export async function getSummary() {
   const [player, rank, games, wins, totals] = await Promise.all([
     playerRepository.findPlayer(),
@@ -95,6 +90,63 @@ export async function getMatches(limit: number, offset: number) {
   };
 }
 
+const POSITION_ORDER = ["TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY"];
+
+function positionIndex(position: string) {
+  const index = POSITION_ORDER.indexOf(position);
+  return index === -1 ? POSITION_ORDER.length : index;
+}
+
+export async function getScoreboard(matchId: string) {
+  const [entries, player] = await Promise.all([
+    matchRepository.findScoreboard(matchId),
+    playerRepository.findPlayer(),
+  ]);
+
+  if (entries.length === 0) {
+    throw new HttpError(404, "Esta partida todavía no tiene marcador");
+  }
+
+  const myTeamId = entries.find((entry) => entry.puuid === player?.puuid)?.teamId;
+  const teamIds = [...new Set(entries.map((entry) => entry.teamId))].sort(
+    (a, b) => Number(b === myTeamId) - Number(a === myTeamId) || a - b,
+  );
+
+  return {
+    matchId,
+    teams: teamIds.map((teamId) => {
+      const players = entries
+        .filter((entry) => entry.teamId === teamId)
+        .sort((a, b) => positionIndex(a.teamPosition) - positionIndex(b.teamPosition));
+
+      return {
+        teamId,
+        isMyTeam: teamId === myTeamId,
+        win: players[0].win,
+        kills: players.reduce((sum, entry) => sum + entry.kills, 0),
+        goldEarned: players.reduce((sum, entry) => sum + entry.goldEarned, 0),
+        players: players.map((entry) => ({
+          gameName: entry.gameName,
+          tagLine: entry.tagLine,
+          isMe: entry.puuid === player?.puuid,
+          champion: entry.champion.name,
+          position: entry.teamPosition,
+          champLevel: entry.champLevel,
+          win: entry.win,
+          kills: entry.kills,
+          deaths: entry.deaths,
+          assists: entry.assists,
+          kda: calculateKda(entry.kills, entry.deaths, entry.assists),
+          cs: entry.cs,
+          visionScore: entry.visionScore,
+          goldEarned: entry.goldEarned,
+          damageToChampions: entry.damageToChampions,
+        })),
+      };
+    }),
+  };
+}
+
 export async function getChampionStats() {
   const [stats, wins] = await Promise.all([
     matchRepository.statsByChampion(),
@@ -105,7 +157,6 @@ export async function getChampionStats() {
     stats.map((stat) => stat.championId),
   );
 
-  // Map: buscar por id sin recorrer el array cada vez (como un HashMap en Java)
   const nameById = new Map(champions.map((c) => [c.id, c.name]));
   const winsById = new Map(wins.map((w) => [w.championId, w._count._all]));
 
@@ -145,7 +196,6 @@ export async function getRankHistory(days: number) {
 export async function getTrends(last: number) {
   const rows = await matchRepository.findLastMatches(last);
 
-  // Vienen de la más reciente a la más antigua; la gráfica las quiere en orden cronológico
   return rows.reverse().map((row) => ({
     matchId: row.matchId,
     playedAt: row.match.gameCreation,

@@ -6,9 +6,11 @@ import {
   getMatchIds,
   getMatch,
 } from "../riot/riotClient.js";
+import { toScoreboardEntries } from "./scoreboard.js";
+
+const MIN_GAME_SECONDS = 300;
 
 export async function syncPlayer(gameName: string, tagLine: string) {
-
   const account = await getAccountByRiotId(gameName, tagLine);
   const summoner = await getSummoner(account.puuid);
 
@@ -41,9 +43,12 @@ export async function syncPlayer(gameName: string, tagLine: string) {
   });
   const existingIds = new Set(existing.map((match) => match.matchId));
   const newIds = matchIds.filter((id) => !existingIds.has(id));
+  let saved = 0;
 
   for (const matchId of newIds) {
     const match = await getMatch(matchId);
+    if (match.info.gameDuration < MIN_GAME_SECONDS) continue;
+
     const me = match.info.participants.find((p) => p.puuid === account.puuid);
     if (!me) continue;
 
@@ -66,9 +71,13 @@ export async function syncPlayer(gameName: string, tagLine: string) {
             visionScore: me.visionScore,
           },
         },
+        scoreboard: {
+          createMany: { data: toScoreboardEntries(match) },
+        },
       },
     });
+    saved++;
   }
 
-  return { newMatches: newIds.length, rank: soloQ };
+  return { newMatches: saved, rank: soloQ };
 }

@@ -1,7 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { z, ZodError } from "zod";
 
-// Error con código HTTP: lo lanzan los servicios cuando algo "esperado" sale mal
 export class HttpError extends Error {
   constructor(
     public status: number,
@@ -15,7 +14,6 @@ export function notFoundHandler(req: Request, res: Response) {
   res.status(404).json({ error: `Ruta no encontrada: ${req.method} ${req.path}` });
 }
 
-// Express reconoce un middleware de errores porque tiene 4 parámetros
 export function errorHandler(
   err: unknown,
   req: Request,
@@ -35,7 +33,6 @@ export function errorHandler(
     return;
   }
 
-  // Error inesperado: lo registramos completo, pero al cliente no le damos detalles
   console.error(err);
   res.status(500).json({ error: "Error interno del servidor" });
 }
