@@ -2,61 +2,61 @@
 
 [![CI](https://github.com/MK-1379/lol-stats/actions/workflows/ci.yml/badge.svg)](https://github.com/MK-1379/lol-stats/actions/workflows/ci.yml)
 
-Panel personal con mis estadísticas de League of Legends en clasificatoria Solo/Dúo (EUW, **M0n0kuum44#SSJ**), construido sobre la API oficial de Riot Games.
+A personal dashboard with my League of Legends Ranked Solo/Duo stats (EUW, **M0n0kuum44#SSJ**), built on the official Riot Games API.
 
-Un *worker* descarga mis partidas cada 30 minutos y las guarda en MySQL. Una API REST propia calcula las estadísticas y un frontend en React las muestra con un diseño inspirado en las webs de estadísticas como OP.GG. El navegador nunca llama a Riot: la clave de la API solo vive en el servidor.
+A worker downloads my matches every 30 minutes and stores them in MySQL. A custom REST API computes the stats, and a React frontend displays them with a design inspired by stats sites like OP.GG. The browser never calls Riot: the API key only lives on the server.
 
-![Resumen](docs/capturas/resumen.png)
+![Overview](docs/screenshots/overview.png)
 
-| Marcador de una partida | Móvil |
+| Match scoreboard | Mobile |
 | --- | --- |
-| ![Marcador](docs/capturas/marcador.png) | ![Móvil](docs/capturas/movil.png) |
+| ![Scoreboard](docs/screenshots/scoreboard.png) | ![Mobile](docs/screenshots/mobile.png) |
 
-## Funcionalidades
+## Features
 
-- **Resumen:** rango actual con su emblema, PL que faltan para la siguiente división y forma en las últimas 20 partidas (winrate, KDA medio y posiciones).
-- **Historial:** últimas 100 partidas con filtros por resultado y posición.
-- **Puntuación por partida (0-10):** fórmula propia que pondera KDA, muertes, farmeo o visión según la posición y la victoria, con el desglose de cada parte.
-- **Marcador:** los 10 jugadores de cada partida, con daño, oro, CS, visión, MVP y enlace a su perfil de OP.GG.
-- **Campeones:** tabla ordenable por partidas, winrate o KDA, con buscador.
-- **Rendimiento:** evolución de los PL (7, 30 o 90 días) y tendencia de KDA, CS/min y visión, con vista de tabla accesible.
-- Tema claro y oscuro, diseño adaptable a móvil y navegación por teclado.
+- **Overview:** current rank with its emblem, LP left until the next division, and form over the last 20 matches (win rate, average KDA and roles played).
+- **Match history:** the last 100 matches, filterable by result and role.
+- **Performance score (0-10):** a custom formula that weighs KDA, deaths, farming or vision depending on the role, and the result, with a breakdown of each part.
+- **Scoreboard:** all 10 players of each match, with damage, gold, CS, vision, the MVP and a link to their OP.GG profile.
+- **Champions:** a table sortable by games, win rate or KDA, with search.
+- **Performance:** LP progression (7, 30 or 90 days) and KDA, CS/min and vision trends, each with an accessible table view.
+- Light and dark themes, responsive layout and keyboard navigation.
 
-## Arquitectura
+## Architecture
 
 ```mermaid
 flowchart LR
-    riot[API de Riot] -->|cada 30 min| worker
+    riot[Riot API] -->|every 30 min| worker
     worker -->|Prisma| db[(MySQL)]
-    api["API REST<br>Express"] -->|Prisma| db
-    web["React<br>servido por nginx"] -->|/api| api
-    usuario((Navegador)) --> web
+    api["REST API<br>Express"] -->|Prisma| db
+    web["React<br>served by nginx"] -->|/api| api
+    user((Browser)) --> web
 ```
 
-Cuatro servicios en Docker Compose:
+Four services in Docker Compose:
 
-| Servicio | Qué hace | Puerto local |
+| Service | What it does | Local port |
 | --- | --- | --- |
-| `db` | MySQL 8.4 con un volumen para los datos | 3308 |
-| `worker` | Sincroniza jugador, rango, partidas y marcadores con node-cron | — |
-| `api` | API REST: `/api/summary`, `/matches`, `/matches/:id/scoreboard`, `/champions`, `/rank-history`, `/trends` | 3000 |
-| `web` | nginx sirve el build de React y redirige `/api` al contenedor `api` | 8080 |
+| `db` | MySQL 8.4 with a volume for the data | 3308 |
+| `worker` | Syncs player, rank, matches and scoreboards with node-cron | — |
+| `api` | REST API: `/api/summary`, `/matches`, `/matches/:id/scoreboard`, `/champions`, `/rank-history`, `/trends` | 3000 |
+| `web` | nginx serves the React build and proxies `/api` to the `api` container | 8080 |
 
-El servidor está organizado en capas: `routes` → `controllers` (validación con Zod) → `services` (cálculos) → `repositories` (consultas con Prisma). `api` y `worker` comparten código y usan la misma imagen.
+The server is split into layers: `routes` → `controllers` (validation with Zod) → `services` (calculations) → `repositories` (queries with Prisma). `api` and `worker` share the same code and Docker image.
 
-## Tecnologías
+## Tech stack
 
 - **Frontend:** React 19, TypeScript, Vite, Tailwind CSS 4, TanStack Query, Recharts.
 - **Backend:** Node.js 24, Express 5, TypeScript, Zod, Prisma 7, node-cron.
-- **Base de datos:** MySQL 8.4.
-- **Calidad:** Vitest, Supertest, Testing Library, ESLint y GitHub Actions.
-- **Infraestructura:** Docker Compose y nginx.
+- **Database:** MySQL 8.4.
+- **Quality:** Vitest, Supertest, Testing Library, ESLint and GitHub Actions.
+- **Infrastructure:** Docker Compose and nginx.
 
-## Cómo ejecutarlo
+## Getting started
 
-Requisitos: Docker con Docker Compose, Node.js 24 y una clave de la API de Riot ([developer.riotgames.com](https://developer.riotgames.com)).
+Requirements: Docker with Docker Compose, Node.js 24 and a Riot API key ([developer.riotgames.com](https://developer.riotgames.com)).
 
-1. Clona el repositorio y crea el archivo de entorno:
+1. Clone the repository and create the environment file:
 
    ```bash
    git clone https://github.com/MK-1379/lol-stats.git
@@ -64,9 +64,9 @@ Requisitos: Docker con Docker Compose, Node.js 24 y una clave de la API de Riot 
    cp .env.example .env
    ```
 
-   Rellena `.env` con tu clave de Riot, tu Riot ID y las contraseñas de MySQL. `DATABASE_URL` es la conexión desde tu equipo, por ejemplo `mysql://lolstats:cambia_esto@localhost:3308/lolstats`, con la misma contraseña que `MYSQL_PASSWORD`.
+   Fill in `.env` with your Riot API key, your Riot ID and the MySQL passwords. `DATABASE_URL` is the connection from your machine, for example `mysql://lolstats:change_me@localhost:3308/lolstats`, using the same password as `MYSQL_PASSWORD`.
 
-2. Arranca la base de datos y aplica las migraciones:
+2. Start the database and apply the migrations:
 
    ```bash
    docker compose up -d db
@@ -76,41 +76,41 @@ Requisitos: Docker con Docker Compose, Node.js 24 y una clave de la API de Riot 
    cd ..
    ```
 
-3. Arranca el resto de servicios y abre http://localhost:8080:
+3. Start the remaining services and open http://localhost:8080:
 
    ```bash
    docker compose up -d --build
    ```
 
-La primera sincronización se ejecuta al arrancar el worker. Puedes seguirla con `docker compose logs -f worker`.
+The first sync runs when the worker starts. You can follow it with `docker compose logs -f worker`.
 
-## Desarrollo y tests
+## Development and tests
 
 ```bash
 cd server && npm run dev
 cd web && npm run dev
 ```
 
-El frontend en modo desarrollo se abre en http://localhost:5173 y Vite redirige `/api` a la API.
+In development the frontend runs at http://localhost:5173 and Vite proxies `/api` to the API.
 
 ```bash
 cd server && npm test
 cd web && npm test
 ```
 
-- **Server:** tests de la API con Supertest y repositorios simulados, y del cliente de Riot con `fetch` simulado.
-- **Web:** tests de la puntuación, los formatos y el historial (filtros, paginación y carga del marcador) con Testing Library.
+- **Server:** API tests with Supertest and mocked repositories, and Riot client tests with a mocked `fetch`.
+- **Web:** tests for the score formula, the formatters and the match history (filters, pagination and scoreboard loading) with Testing Library.
 
-GitHub Actions ejecuta en cada push el lint, los tests y el build de las dos partes y construye las imágenes de Docker. Los tests no necesitan una clave real de Riot.
+On every push, GitHub Actions runs the linter, the tests and the build for both parts, and builds the Docker images. The tests don't need a real Riot API key.
 
-## Decisiones
+## Design decisions
 
-- **Solo una cuenta.** La clave personal de Riot está pensada para mostrar tus propias estadísticas. Un buscador de cualquier jugador necesitaría una clave de producción.
-- **Fotos del rango.** Riot no da el historial de PL, así que el worker guarda una foto del rango en cada sincronización y la gráfica se construye a partir de ellas.
-- **El marcador va en otra tabla** (`ScoreboardEntry`) para que las estadísticas propias sigan leyendo solo mis filas de `MatchParticipant`.
-- **La puntuación no es IA:** es una fórmula transparente cuyo desglose se puede consultar en cada partida.
-- Las partidas de menos de 5 minutos (remakes) no se guardan.
+- **A single account.** Riot's personal API key is meant for showing your own stats. Searching any player would need a production key.
+- **Rank snapshots.** Riot doesn't provide LP history, so the worker stores a snapshot of the rank on every sync and the chart is built from those snapshots.
+- **The scoreboard has its own table** (`ScoreboardEntry`), so my own stats keep reading only my rows in `MatchParticipant`.
+- **The score isn't AI:** it's a transparent formula, and its breakdown can be checked on every match.
+- Matches shorter than 5 minutes (remakes) aren't stored.
 
-## Aviso legal
+## Legal
 
-LoLStats no está respaldado por Riot Games y no refleja las opiniones de Riot Games ni de nadie oficialmente involucrado en la producción o gestión de las propiedades de Riot Games. Riot Games y todas las propiedades asociadas son marcas comerciales o marcas registradas de Riot Games, Inc.
+LoLStats isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
