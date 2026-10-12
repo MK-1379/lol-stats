@@ -13,7 +13,9 @@ export function useTheme() {
     document.documentElement.dataset.theme = theme;
     try {
       localStorage.setItem("theme", theme);
-    } catch {}
+    } catch {
+      return;
+    }
   }, [theme]);
 
   function toggleTheme() {
