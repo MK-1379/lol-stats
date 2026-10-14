@@ -12,6 +12,7 @@ import { performanceScore, scoreTone } from "../utils/score";
 import { ChampionIcon } from "./ChampionIcon";
 import { Scoreboard } from "./Scoreboard";
 import { Panel } from "./ui/Panel";
+import { ScoreBadge } from "./ui/ScoreBadge";
 import { SegmentedControl } from "./ui/SegmentedControl";
 
 type ResultFilter = "all" | "win" | "loss";
@@ -68,7 +69,7 @@ export function MatchList({ matches }: { matches: MatchItem[] }) {
             id="position-filter"
             value={position}
             onChange={(event) => changePosition(event.target.value)}
-            className="focus-ring min-h-9 rounded-ui border border-line bg-panel-2 px-2 text-small font-semibold text-ink hover:border-faint"
+            className="focus-ring min-h-9 rounded-ui border border-control bg-panel-2 px-2 text-small font-semibold text-ink hover:border-muted"
           >
             <option value="ALL">Todas las posiciones</option>
             {POSITIONS.map((item) => (
@@ -128,110 +129,132 @@ function MatchRow({ match, isBest }: { match: MatchItem; isBest: boolean }) {
   const { score, parts } = performanceScore(match);
   const scoreInfo = scoreTone(score);
   const detailsId = `details-${match.matchId}`;
+  const when = formatRelative(match.playedAt);
   const tone = match.win
     ? { row: "border-win bg-win-bg", text: "text-win", label: "Victoria" }
     : { row: "border-loss bg-loss-bg", text: "text-loss", label: "Derrota" };
 
   return (
-    <li
-      className={`grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-2 rounded-ui border-l-4 py-2.5 pl-3 pr-3 sm:grid-cols-[88px_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,0.9fr)_72px_32px] sm:items-center sm:pr-1.5 ${tone.row}`}
-    >
-      <div className="flex items-baseline gap-2 sm:block">
-        <p className={`text-small font-bold ${tone.text}`}>{tone.label}</p>
-        <p className="text-meta text-muted">
-          <time dateTime={match.playedAt} title={formatDate(match.playedAt)}>
-            {formatRelative(match.playedAt)}
-          </time>
-        </p>
-        <p className="text-meta text-muted tabular-nums">{formatDuration(match.durationSeconds)}</p>
-      </div>
-
-      <div className="col-start-2 row-start-1 flex flex-row-reverse items-baseline gap-2 self-start text-right sm:col-start-5 sm:flex-col sm:items-end sm:gap-0 sm:self-center">
-        <span className="flex items-center gap-1.5">
-          {isBest && (
-            <span
-              title="Mejor puntuación de las partidas mostradas"
-              className="rounded-ui bg-kda-high px-1 text-caption font-bold text-bg uppercase"
-            >
-              Mejor
+    <li className={`rounded-ui border-l-4 ${tone.row}`}>
+      <div className="relative grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 gap-y-1.5 py-2 pr-2 pl-3 sm:grid-cols-[88px_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,0.9fr)_112px_32px] sm:gap-x-4 sm:py-2.5 sm:pr-1.5">
+        <div className="col-start-1 row-start-2 flex min-w-0 items-baseline gap-2 sm:row-start-1 sm:block">
+          <p className={`text-small font-bold ${tone.text}`}>{tone.label}</p>
+          <p className="truncate text-meta text-muted">
+            <time dateTime={match.playedAt} title={formatDate(match.playedAt)}>
+              {when}
+            </time>
+            <span className="hidden tabular-nums sm:block">
+              {formatDuration(match.durationSeconds)}
             </span>
-          )}
-          <span className={`font-display text-stat font-bold tabular-nums ${scoreInfo.text}`}>
-            {score.toFixed(1)}
+          </p>
+        </div>
+
+        <div className="col-start-1 row-start-1 flex min-w-0 items-center gap-2.5 sm:col-start-2 sm:gap-3">
+          <ChampionIcon name={match.champion} size="row" />
+          <div className="min-w-0">
+            <p className="truncate font-semibold">{match.champion}</p>
+            <p className="text-meta text-muted">{formatPosition(match.position)}</p>
+          </div>
+        </div>
+
+        <div className="col-start-2 row-start-1 text-right sm:col-start-3 sm:text-left">
+          <p className="text-heading font-semibold whitespace-nowrap tabular-nums">
+            <span aria-hidden="true">
+              {match.kills} <span className="text-faint">/</span> {match.deaths}{" "}
+              <span className="text-faint">/</span> {match.assists}
+            </span>
+            <span className="sr-only">
+              {match.kills} asesinatos, {match.deaths} muertes, {match.assists} asistencias
+            </span>
+          </p>
+          <p className={`text-meta font-semibold tabular-nums ${kdaTone(match.kda)}`}>
+            {match.kda}:1 KDA
+          </p>
+        </div>
+
+        <div className="col-start-3 row-start-1 flex flex-col items-end sm:col-start-5">
+          <span className="flex items-center gap-1.5">
+            <ScoreBadge score={score} level={scoreInfo.level} className="size-5 sm:size-6" />
+            <span
+              className={`font-display text-heading font-bold tabular-nums sm:text-stat ${scoreInfo.text}`}
+            >
+              {score.toFixed(1)}
+              <span aria-hidden="true" className="text-meta font-semibold text-muted sm:text-small">
+                /10
+              </span>
+            </span>
           </span>
-        </span>
-        <span className="text-meta text-muted">
-          {scoreInfo.label}
-          <span className="sr-only">. Puntuación sobre 10</span>
-        </span>
-      </div>
-
-      <div className="flex min-w-0 items-center gap-3">
-        <ChampionIcon name={match.champion} size="lg" />
-        <div className="min-w-0">
-          <p className="truncate font-semibold">{match.champion}</p>
-          <p className="text-meta text-muted">{formatPosition(match.position)}</p>
+          <span className="flex items-center gap-1.5 text-meta text-muted">
+            {isBest && (
+              <span
+                title="Mejor puntuación de las partidas mostradas"
+                className="rounded-ui bg-perf-4 px-1 text-caption font-bold text-bg uppercase"
+              >
+                Mejor
+                <span className="sr-only"> puntuación de las partidas mostradas</span>
+              </span>
+            )}
+            {scoreInfo.label}
+            <span className="sr-only">. Puntuación sobre 10</span>
+          </span>
         </div>
-      </div>
 
-      <div className="text-right sm:text-left">
-        <p className="text-heading font-semibold whitespace-nowrap tabular-nums">
-          {match.kills} <span className="text-faint">/</span>{" "}
-          <span className="text-loss">{match.deaths}</span> <span className="text-faint">/</span>{" "}
-          {match.assists}
-        </p>
-        <p className={`text-meta font-semibold tabular-nums ${kdaTone(match.kda)}`}>
-          {match.kda}:1 KDA
-        </p>
-      </div>
+        <dl className="col-start-2 row-start-2 flex justify-end gap-3 text-meta sm:col-start-4 sm:row-start-1 sm:block sm:space-y-0.5">
+          <div className="flex gap-1">
+            <dt className="text-muted">CS</dt>
+            <dd className="tabular-nums">
+              {match.cs}
+              <span className="hidden text-muted sm:inline">
+                {" "}
+                ({csPerMinute(match.cs, match.durationSeconds)}/min)
+              </span>
+            </dd>
+          </div>
+          <div className="flex gap-1">
+            <dt className="text-muted">Visión</dt>
+            <dd className="tabular-nums">{match.visionScore}</dd>
+          </div>
+        </dl>
 
-      <dl className="col-span-2 flex gap-4 text-meta sm:col-span-1 sm:block sm:space-y-0.5">
-        <div className="flex gap-1">
-          <dt className="text-muted">CS</dt>
-          <dd className="tabular-nums">
-            {match.cs}{" "}
-            <span className="text-muted">({csPerMinute(match.cs, match.durationSeconds)}/min)</span>
-          </dd>
-        </div>
-        <div className="flex gap-1">
-          <dt className="text-muted">Visión</dt>
-          <dd className="tabular-nums">{match.visionScore}</dd>
-        </div>
-      </dl>
-
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-controls={detailsId}
-        onClick={() => setOpen((current) => !current)}
-        className="focus-ring col-span-2 flex min-h-9 items-center justify-center gap-1.5 rounded-ui border border-line/70 text-meta font-semibold text-muted transition-colors hover:bg-panel/60 hover:text-ink active:translate-y-px sm:col-span-1 sm:col-start-6 sm:row-start-1 sm:h-full sm:border-0"
-      >
-        <span className="sm:sr-only">{open ? "Ocultar marcador" : "Ver marcador"}</span>
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 20 20"
-          className={`size-4 transition-transform motion-reduce:transition-none ${open ? "rotate-180" : ""}`}
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls={detailsId}
+          onClick={() => setOpen((current) => !current)}
+          className="col-start-3 row-start-2 grid size-6 place-items-center justify-self-end rounded-ui text-muted transition-colors after:absolute after:inset-0 after:rounded-ui after:content-[''] hover:text-ink hover:after:bg-ink/5 focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-brand sm:col-start-6 sm:row-start-1 sm:size-8"
         >
-          <path
-            d="M5 7.5 10 12.5 15 7.5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </button>
+          <span className="sr-only">
+            {open ? "Ocultar marcador" : "Ver marcador"}: {match.champion}, {tone.label}, {when}
+          </span>
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 20 20"
+            className={`size-4 transition-transform motion-reduce:transition-none ${open ? "rotate-180" : ""}`}
+          >
+            <path
+              d="M5 7.5 10 12.5 15 7.5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+      </div>
 
       {open && (
         <div
           id={detailsId}
-          className="col-span-full -mx-3 -mb-2.5 space-y-4 rounded-br-ui border-t border-line bg-panel p-3 sm:-mr-1.5"
+          className="space-y-4 rounded-br-ui border-t border-line bg-panel p-3"
         >
           <Scoreboard matchId={match.matchId} durationSeconds={match.durationSeconds} />
           <div>
-            <p className="caption mb-2">Cómo se calcula tu puntuación</p>
-            <ul className="grid gap-x-6 gap-y-1.5 sm:grid-cols-5">
+            <p className="caption">Cómo se calcula tu puntuación</p>
+            <p className="mt-0.5 mb-2 text-meta text-muted">
+              Cada parte compara tu partida con un objetivo y aporta puntos a tu nota de 10.
+            </p>
+            <ul className="grid gap-x-6 gap-y-3 sm:grid-cols-5">
               {parts.map((part) => (
                 <li key={part.label} className="text-meta">
                   <div className="flex justify-between gap-2">
@@ -240,15 +263,20 @@ function MatchRow({ match, isBest }: { match: MatchItem; isBest: boolean }) {
                       <span className="text-faint">· {Math.round(part.weight * 100)}%</span>
                     </span>
                     <span className="font-semibold tabular-nums">
-                      {Math.round(part.value * 100)}
+                      +{(part.value * part.weight * 10).toFixed(1)}
+                      <span className="sr-only"> puntos</span>
                     </span>
                   </div>
                   <div aria-hidden="true" className="mt-1 h-1 rounded-full bg-panel-2">
                     <div
-                      className="h-full rounded-full bg-brand"
+                      className="h-full rounded-full bg-perf-3"
                       style={{ width: `${part.value * 100}%` }}
                     />
                   </div>
+                  <p className="mt-1 text-faint tabular-nums">
+                    <span className="text-ink">{part.raw}</span>
+                    {part.target && ` · objetivo ${part.target}`}
+                  </p>
                 </li>
               ))}
             </ul>

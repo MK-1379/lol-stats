@@ -3,13 +3,14 @@ import { championIconUrl } from "../utils/format";
 
 type ChampionIconProps = {
   name: string;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "row";
 };
 
 const SIZES = {
   sm: "size-7 text-meta",
   md: "size-9 text-small",
   lg: "size-12 text-base",
+  row: "size-9 text-small sm:size-12 sm:text-base",
 };
 
 export function ChampionIcon({ name, size = "md" }: ChampionIconProps) {

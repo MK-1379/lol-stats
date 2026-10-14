@@ -3,6 +3,8 @@ import {
   CartesianGrid,
   Line,
   LineChart,
+  ReferenceArea,
+  ReferenceDot,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -11,6 +13,7 @@ import {
 import type { RankPoint } from "../../api/types";
 import { useRankHistory } from "../../hooks/useStats";
 import { formatDate, formatShortDate, formatTier, formatTotalLp } from "../../utils/format";
+import { divisionBands, formatLpChange, lpChange } from "../../utils/trends";
 import { SegmentedControl } from "../ui/SegmentedControl";
 import { ChartCard } from "./ChartCard";
 import { axisTick, chartColors, tooltipBox } from "./chartTheme";
@@ -47,12 +50,29 @@ export function RankChart() {
   const { data: snapshots = [], isPending, error } = useRankHistory(days);
   const data = lastSnapshotPerDay(snapshots);
 
-  const { min, max, ticks } = divisionTicks(data.map((point) => point.totalLp));
+  const values = data.map((point) => point.totalLp);
+  const { min, max, ticks } = divisionTicks(values);
+  const change = lpChange(values);
+  const last = data[data.length - 1];
 
   return (
     <ChartCard
       title="Evolución del rango"
       description={`Tu rango al final de cada día, últimos ${days} días`}
+      headline={
+        last && (
+          <p className="mb-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span
+              className={`font-display text-stat font-bold tabular-nums ${change > 0 ? "text-win" : change < 0 ? "text-loss" : "text-ink"}`}
+            >
+              {formatLpChange(change)}
+            </span>
+            <span className="text-small text-muted">
+              en {days} días · ahora {formatTier(last.tier)} {last.rank}, {last.leaguePoints} LP
+            </span>
+          </p>
+        )
+      }
       controls={
         <SegmentedControl label="Periodo" options={PERIODS} value={days} onChange={setDays} />
       }
@@ -86,7 +106,17 @@ export function RankChart() {
       }
     >
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 8, right: 24, bottom: 0, left: 8 }}>
+        <LineChart accessibilityLayer={false} data={data} margin={{ top: 8, right: 24, bottom: 0, left: 8 }}>
+          {divisionBands(min, max).map((band, index) => (
+            <ReferenceArea
+              key={band.from}
+              y1={band.from}
+              y2={band.to}
+              fill={index % 2 === 0 ? chartColors.band : chartColors.surface}
+              fillOpacity={1}
+              stroke="none"
+            />
+          ))}
           <CartesianGrid stroke={chartColors.grid} vertical={false} />
           <XAxis
             dataKey="takenAt"
@@ -125,11 +155,7 @@ export function RankChart() {
             dataKey="totalLp"
             stroke={chartColors.accent}
             strokeWidth={2}
-            dot={
-              data.length <= 31
-                ? { r: 4, fill: chartColors.accent, stroke: chartColors.surface, strokeWidth: 2 }
-                : false
-            }
+            dot={false}
             activeDot={{
               r: 6,
               fill: chartColors.accent,
@@ -137,6 +163,16 @@ export function RankChart() {
               strokeWidth: 2,
             }}
           />
+          {last && (
+            <ReferenceDot
+              x={last.takenAt}
+              y={last.totalLp}
+              r={5}
+              fill={chartColors.accent}
+              stroke={chartColors.surface}
+              strokeWidth={2}
+            />
+          )}
         </LineChart>
       </ResponsiveContainer>
     </ChartCard>

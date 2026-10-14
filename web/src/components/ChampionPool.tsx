@@ -32,7 +32,7 @@ export function ChampionPool() {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Buscar campeón"
-            className="focus-ring min-h-9 w-48 rounded-ui border border-line bg-panel-2 px-3 text-small placeholder:text-faint hover:border-faint"
+            className="focus-ring min-h-9 w-48 rounded-ui border border-control bg-panel-2 px-3 text-small placeholder:text-faint hover:border-muted"
           />
         </div>
       }
@@ -56,10 +56,10 @@ export function ChampionPool() {
             </caption>
             <thead className="bg-panel-2">
               <tr>
-                <th scope="col" className="caption w-10 py-2 pl-panel font-semibold">
+                <th scope="col" className="caption hidden w-10 py-2 pl-panel font-semibold sm:table-cell">
                   #
                 </th>
-                <th scope="col" className="caption w-full py-2 pl-2 font-semibold">
+                <th scope="col" className="caption w-full py-2 pl-3 font-semibold sm:pl-2">
                   Campeón
                 </th>
                 <SortableHeader
@@ -108,7 +108,7 @@ function SortableHeader({ label, column, sortKey, onSort }: SortableHeaderProps)
     <th
       scope="col"
       aria-sort={isActive ? "descending" : "none"}
-      className="py-0.5 pr-panel pl-3 text-right whitespace-nowrap"
+      className="py-0.5 pr-2 pl-1 text-right whitespace-nowrap sm:pr-panel sm:pl-3"
     >
       <button
         type="button"
@@ -130,14 +130,18 @@ function ChampionRow({ champion, position }: { champion: ChampionStat; position:
   const losses = champion.games - champion.wins;
   return (
     <tr className="transition-colors hover:bg-panel-2">
-      <td className="py-2 pl-panel text-meta text-faint tabular-nums">{position}</td>
-      <td className="py-2 pl-2">
-        <div className="flex items-center gap-3">
+      <td className="hidden py-2 pl-panel text-meta text-faint tabular-nums sm:table-cell">
+        {position}
+      </td>
+      <td className="py-2 pl-3 sm:pl-2">
+        <div className="flex items-center gap-2 sm:gap-3">
           <ChampionIcon name={champion.champion} size="sm" />
           <span className="font-semibold whitespace-nowrap">{champion.champion}</span>
         </div>
       </td>
-      <td className="py-2 pr-panel pl-3 text-right tabular-nums">{champion.games}</td>
+      <td className="py-2 pr-2 pl-1 text-right tabular-nums sm:pr-panel sm:pl-3">
+        {champion.games}
+      </td>
       <td className="hidden px-3 py-2 sm:table-cell">
         <div className="ml-auto flex w-28 items-center gap-2">
           <div
@@ -152,12 +156,12 @@ function ChampionRow({ champion, position }: { champion: ChampionStat; position:
         </div>
       </td>
       <td
-        className={`py-2 pr-panel pl-3 text-right font-semibold tabular-nums ${winrateTone(champion.winrate)}`}
+        className={`py-2 pr-2 pl-1 text-right font-semibold tabular-nums sm:pr-panel sm:pl-3 ${winrateTone(champion.winrate)}`}
       >
         {champion.winrate}%
       </td>
       <td
-        className={`py-2 pr-panel pl-3 text-right font-semibold tabular-nums ${kdaTone(champion.kda)}`}
+        className={`py-2 pr-3 pl-1 text-right font-semibold tabular-nums sm:pr-panel sm:pl-3 ${kdaTone(champion.kda)}`}
       >
         {champion.kda}
       </td>

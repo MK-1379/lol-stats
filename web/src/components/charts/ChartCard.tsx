@@ -3,24 +3,28 @@ import { useId, type ReactNode } from "react";
 type ChartCardProps = {
   title: string;
   description: string;
+  headline?: ReactNode;
   controls?: ReactNode;
   isPending: boolean;
   error: Error | null;
   isEmpty: boolean;
   emptyMessage: string;
   table: ReactNode;
+  legend?: ReactNode;
   children: ReactNode;
 };
 
 export function ChartCard({
   title,
   description,
+  headline,
   controls,
   isPending,
   error,
   isEmpty,
   emptyMessage,
   table,
+  legend,
   children,
 }: ChartCardProps) {
   const titleId = useId();
@@ -35,6 +39,7 @@ export function ChartCard({
       </div>
 
       <div className="flex-1 p-panel">
+        {!isPending && !error && !isEmpty && headline}
         <p className="mb-3 text-small text-muted">{description}</p>
         {isPending ? (
           <div className="h-60 rounded-ui bg-panel-2 motion-safe:animate-pulse" role="status">
@@ -52,9 +57,12 @@ export function ChartCard({
             {emptyMessage}
           </p>
         ) : (
-          <div aria-hidden="true" className="h-60">
-            {children}
-          </div>
+          <>
+            <div aria-hidden="true" className="h-60">
+              {children}
+            </div>
+            {legend}
+          </>
         )}
       </div>
 

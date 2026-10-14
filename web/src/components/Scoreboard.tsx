@@ -130,11 +130,13 @@ function PlayerRow({ player, score, isMvp, maxDamage, durationSeconds }: PlayerR
           <span className="relative shrink-0">
             <ChampionIcon name={player.champion} size="sm" />
             <span
+              aria-hidden="true"
               title="Nivel"
               className="absolute -right-1 -bottom-1 rounded-ui bg-ink px-0.5 text-caption leading-tight font-bold text-bg tabular-nums"
             >
               {player.champLevel}
             </span>
+            <span className="sr-only">Nivel {player.champLevel}</span>
           </span>
           <span className="min-w-0">
             <span className="flex min-w-0 items-center gap-1.5">
@@ -169,14 +171,19 @@ function PlayerRow({ player, score, isMvp, maxDamage, durationSeconds }: PlayerR
           {score.toFixed(1)}
         </span>
         {isMvp && (
-          <span className="rounded-ui bg-kda-high px-1 text-caption font-bold text-bg uppercase">
+          <span className="rounded-ui bg-perf-4 px-1 text-caption font-bold text-bg uppercase">
             MVP
           </span>
         )}
       </td>
       <td className="py-1.5 text-right whitespace-nowrap tabular-nums">
         <span className="block font-semibold">
-          {player.kills}/<span className="text-loss">{player.deaths}</span>/{player.assists}
+          <span aria-hidden="true">
+            {player.kills}/{player.deaths}/{player.assists}
+          </span>
+          <span className="sr-only">
+            {player.kills} asesinatos, {player.deaths} muertes, {player.assists} asistencias
+          </span>
         </span>
         <span className={`block font-semibold ${kdaTone(player.kda)}`}>{player.kda}:1</span>
       </td>

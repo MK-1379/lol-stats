@@ -3,6 +3,10 @@ export const chartColors = {
   grid: "var(--chart-grid)",
   axis: "var(--chart-axis)",
   surface: "var(--chart-surface)",
+  band: "var(--chart-band)",
+  win: "var(--win)",
+  loss: "var(--loss)",
+  average: "var(--ink)",
 };
 
 export const axisTick = { fill: chartColors.axis, fontSize: 11 };

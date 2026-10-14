@@ -34,6 +34,28 @@ describe("performanceScore", () => {
   });
 });
 
+describe("partes de la puntuación", () => {
+  it("enseña el valor real y el objetivo de cada parte", () => {
+    const match = makeMatch({ kda: 2, deaths: 4, durationSeconds: 1800, visionScore: 60 });
+    const parts = performanceScore(match).parts;
+
+    expect(parts.find((part) => part.label === "KDA")).toMatchObject({ raw: "2", target: "5" });
+    expect(parts.find((part) => part.label === "Muertes")).toMatchObject({ raw: "4", target: "0" });
+    expect(parts.find((part) => part.label === "Visión")).toMatchObject({
+      raw: "2/min",
+      target: "2.5/min",
+    });
+  });
+
+  it("usa farmeo en vez de asistencias fuera de support", () => {
+    const match = makeMatch({ position: "MIDDLE", cs: 240, durationSeconds: 1800 });
+    const labels = performanceScore(match).parts.map((part) => part.label);
+
+    expect(labels).toEqual(["KDA", "Muertes", "Farmeo", "Visión", "Victoria"]);
+    expect(performanceScore(match).parts[2]).toMatchObject({ raw: "8 CS/min", target: "9 CS/min" });
+  });
+});
+
 describe("scoreTone", () => {
   it.each([
     [8, "Excelente"],
@@ -42,5 +64,14 @@ describe("scoreTone", () => {
     [3.9, "Floja"],
   ])("un %s es %s", (score, label) => {
     expect(scoreTone(score).label).toBe(label);
+  });
+
+  it.each([
+    [9.5, 4],
+    [6.8, 3],
+    [5.3, 2],
+    [3.2, 1],
+  ])("un %s está en el nivel %s", (score, level) => {
+    expect(scoreTone(score).level).toBe(level);
   });
 });

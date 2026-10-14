@@ -129,8 +129,8 @@ export function championIconUrl(championName: string) {
 }
 
 export function kdaTone(kda: number) {
-  if (kda >= 4) return "text-kda-high";
-  if (kda >= 3) return "text-kda-mid";
+  if (kda >= 4) return "text-perf-4";
+  if (kda >= 3) return "text-perf-3";
   return "text-ink";
 }
 

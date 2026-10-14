@@ -68,6 +68,19 @@ describe("MatchList", () => {
     expect(visibleChampions()).toHaveLength(3);
   });
 
+  it("da a cada botón del marcador un nombre distinto", () => {
+    renderList();
+
+    expect(screen.getByRole("button", { name: /ver marcador: leona, victoria/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /ver marcador: akali, derrota/i })).toBeInTheDocument();
+  });
+
+  it("lee el K/D/A con palabras", () => {
+    renderList([makeMatch({ kills: 2, deaths: 3, assists: 12 })]);
+
+    expect(screen.getByText("2 asesinatos, 3 muertes, 12 asistencias")).toBeInTheDocument();
+  });
+
   it("enseña 10 partidas y carga 10 más con Mostrar más", async () => {
     const user = userEvent.setup();
     const many = Array.from({ length: 15 }, (_, index) => makeMatch({ matchId: `EUW1_${index}` }));

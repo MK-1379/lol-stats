@@ -2,6 +2,7 @@ import type { MatchItem } from "../api/types";
 import { formatPosition, kdaTone } from "../utils/format";
 import { performanceScore, scoreTone } from "../utils/score";
 import { Panel } from "./ui/Panel";
+import { ScoreBadge } from "./ui/ScoreBadge";
 
 const POSITIONS = ["TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY"];
 
@@ -41,15 +42,25 @@ export function RecentSummary({ matches }: { matches: MatchItem[] }) {
 
         <div className="sm:border-l sm:border-line sm:pl-6">
           <p className="text-heading font-semibold tabular-nums">
-            {kills} / <span className="text-loss">{deaths}</span> / {assists}
+            <span aria-hidden="true">
+              {kills} / {deaths} / {assists}
+            </span>
+            <span className="sr-only">
+              {kills} asesinatos, {deaths} muertes y {assists} asistencias de media
+            </span>
           </p>
           <p className={`text-stat font-display font-bold tabular-nums ${kdaTone(kda)}`}>
             {kda}:1 <span className="text-small font-sans font-semibold text-muted">KDA medio</span>
           </p>
-          <p className="mt-1 text-small text-muted">
-            Puntuación media{" "}
+          <p className="mt-1 flex items-center gap-1.5 text-small text-muted">
+            Puntuación media
+            <ScoreBadge score={averageScore} level={scoreInfo.level} className="size-4" />
             <span className={`font-semibold tabular-nums ${scoreInfo.text}`}>
               {averageScore.toFixed(1)}
+              <span aria-hidden="true" className="text-muted">
+                /10
+              </span>
+              <span className="sr-only"> sobre 10</span>
             </span>
           </p>
         </div>
