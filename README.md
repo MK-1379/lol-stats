@@ -4,6 +4,8 @@
 
 A personal dashboard with my League of Legends Ranked Solo/Duo stats (EUW, **M0n0kuum44#SSJ**), built on the official Riot Games API.
 
+**Live demo:** https://lolstats-mk.duckdns.org
+
 A worker downloads my matches every 30 minutes and stores them in MySQL. A custom REST API computes the stats, and a React frontend displays them with a design inspired by stats sites like OP.GG. The browser never calls Riot: the API key only lives on the server.
 
 ![Overview](docs/screenshots/overview.png)
@@ -50,7 +52,7 @@ The server is split into layers: `routes` → `controllers` (validation with Zod
 - **Backend:** Node.js 24, Express 5, TypeScript, Zod, Prisma 7, node-cron.
 - **Database:** MySQL 8.4.
 - **Quality:** Vitest, Supertest, Testing Library, ESLint and GitHub Actions.
-- **Infrastructure:** Docker Compose and nginx.
+- **Infrastructure:** Docker Compose and nginx, deployed on an Oracle Cloud ARM VM with Caddy for HTTPS.
 
 ## Getting started
 
