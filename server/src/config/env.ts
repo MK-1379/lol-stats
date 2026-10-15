@@ -10,6 +10,7 @@ const envSchema = z.object({
   RIOT_TAG_LINE: z.string().min(1),
   PORT: z.coerce.number().int().default(3000),
   CORS_ORIGINS: z.string().default("http://localhost:5173,http://localhost:8080"),
+  TRUST_PROXY: z.coerce.number().int().min(0).default(1),
 });
 
 export const env = envSchema.parse(process.env);

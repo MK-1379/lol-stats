@@ -25,6 +25,7 @@ services:
       RIOT_API_KEY: ${RIOT_API_KEY}
       RIOT_GAME_NAME: ${RIOT_GAME_NAME}
       RIOT_TAG_LINE: ${RIOT_TAG_LINE}
+      TRUST_PROXY: ${TRUST_PROXY:-1}
     ports:
       - "127.0.0.1:3000:3000"
     depends_on:
