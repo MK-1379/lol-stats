@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { ScoreboardPlayer, ScoreboardTeam } from "../api/types";
 import { useScoreboard } from "../hooks/useScoreboard";
 import { csPerMinute, formatPosition, kdaTone, opggUrl } from "../utils/format";
@@ -95,8 +96,9 @@ function TeamTable({ team, scores, mvp, maxDamage, durationSeconds }: TeamTableP
         </tr>
       </thead>
       <tbody>
-        {team.players.map((player) => (
+        {team.players.map((player, index) => (
           <PlayerRow
+            order={index}
             key={`${player.gameName}#${player.tagLine}-${player.champion}`}
             player={player}
             score={scores.get(player) ?? 0}
@@ -111,6 +113,7 @@ function TeamTable({ team, scores, mvp, maxDamage, durationSeconds }: TeamTableP
 }
 
 type PlayerRowProps = {
+  order: number;
   player: ScoreboardPlayer;
   score: number;
   isMvp: boolean;
@@ -118,11 +121,12 @@ type PlayerRowProps = {
   durationSeconds: number;
 };
 
-function PlayerRow({ player, score, isMvp, maxDamage, durationSeconds }: PlayerRowProps) {
+function PlayerRow({ order, player, score, isMvp, maxDamage, durationSeconds }: PlayerRowProps) {
   const scoreInfo = scoreTone(score);
 
   return (
     <tr
+      style={{ "--stagger": `${order * 50}ms` } as CSSProperties}
       className={`border-b border-line/60 last:border-b-0 ${player.isMe ? "bg-panel-2 shadow-[inset_3px_0_0_var(--brand)]" : ""}`}
     >
       <th scope="row" className="py-1.5 pr-2 pl-1.5 text-left font-normal">
@@ -191,7 +195,7 @@ function PlayerRow({ player, score, isMvp, maxDamage, durationSeconds }: PlayerR
         <span className="block tabular-nums">{numberFormat.format(player.damageToChampions)}</span>
         <span aria-hidden="true" className="mt-1 block h-1.5 rounded-full bg-panel-2">
           <span
-            className={`block h-full rounded-full ${player.isMe ? "bg-brand" : "bg-faint"}`}
+            className={`block h-full origin-left rounded-full motion-safe:animate-grow-x ${player.isMe ? "bg-brand" : "bg-faint"}`}
             style={{ width: `${(player.damageToChampions / maxDamage) * 100}%` }}
           />
         </span>

@@ -1,7 +1,9 @@
 import type { MatchItem } from "../api/types";
-import { formatPosition, kdaTone } from "../utils/format";
+import { useCountUp } from "../hooks/useCountUp";
+import { kdaTone } from "../utils/format";
 import { performanceScore, scoreTone } from "../utils/score";
 import { Panel } from "./ui/Panel";
+import { PositionIcon } from "./ui/PositionIcon";
 import { ScoreBadge } from "./ui/ScoreBadge";
 
 const POSITIONS = ["TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY"];
@@ -18,6 +20,9 @@ export function RecentSummary({ matches }: { matches: MatchItem[] }) {
   const kda = deaths === 0 ? kills + assists : Math.round(((kills + assists) / deaths) * 100) / 100;
   const averageScore = average((match) => performanceScore(match).score);
   const scoreInfo = scoreTone(averageScore);
+  const shownWinrate = useCountUp(winrate);
+  const shownKda = useCountUp(kda);
+  const shownScore = useCountUp(averageScore);
   const roleCounts = POSITIONS.map((position) => ({
     position,
     count: matches.filter((match) => match.position === position).length,
@@ -29,8 +34,10 @@ export function RecentSummary({ matches }: { matches: MatchItem[] }) {
       <div className="grid gap-6 p-panel sm:grid-cols-[auto_1fr_auto] sm:items-center">
         <div className="flex items-center gap-4">
           <div className="relative grid size-16 shrink-0 place-items-center">
-            <WinrateRing winrate={winrate} />
-            <span className="absolute text-small font-bold tabular-nums">{winrate}%</span>
+            <WinrateRing winrate={shownWinrate} />
+            <span className="absolute text-small font-bold tabular-nums">
+              {Math.round(shownWinrate)}%
+            </span>
           </div>
           <div>
             <p className="text-small text-muted tabular-nums">
@@ -50,13 +57,14 @@ export function RecentSummary({ matches }: { matches: MatchItem[] }) {
             </span>
           </p>
           <p className={`text-stat font-display font-bold tabular-nums ${kdaTone(kda)}`}>
-            {kda}:1 <span className="text-small font-sans font-semibold text-muted">KDA medio</span>
+            {Number(shownKda.toFixed(2))}:1{" "}
+            <span className="text-small font-sans font-semibold text-muted">KDA medio</span>
           </p>
           <p className="mt-1 flex items-center gap-1.5 text-small text-muted">
             Puntuación media
             <ScoreBadge score={averageScore} level={scoreInfo.level} className="size-4" />
             <span className={`font-semibold tabular-nums ${scoreInfo.text}`}>
-              {averageScore.toFixed(1)}
+              {shownScore.toFixed(1)}
               <span aria-hidden="true" className="text-muted">
                 /10
               </span>
@@ -72,11 +80,11 @@ export function RecentSummary({ matches }: { matches: MatchItem[] }) {
               <li key={role.position} className="flex flex-col items-center gap-1">
                 <div aria-hidden="true" className="flex h-10 w-4 items-end rounded-sm bg-panel-2">
                   <div
-                    className="w-full rounded-sm bg-brand"
+                    className="w-full origin-bottom rounded-sm bg-brand motion-safe:animate-fill-up"
                     style={{ height: `${(role.count / maxRole) * 100}%` }}
                   />
                 </div>
-                <span className="text-caption text-muted">{formatPosition(role.position)}</span>
+                <PositionIcon position={role.position} className="size-5 text-muted" />
                 <span className="sr-only">{role.count} partidas</span>
               </li>
             ))}

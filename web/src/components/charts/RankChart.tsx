@@ -54,6 +54,7 @@ export function RankChart() {
   const { min, max, ticks } = divisionTicks(values);
   const change = lpChange(values);
   const last = data[data.length - 1];
+  const isFlat = data.length >= 2 && values.every((value) => value === values[0]);
 
   return (
     <ChartCard
@@ -78,8 +79,12 @@ export function RankChart() {
       }
       isPending={isPending}
       error={error}
-      isEmpty={data.length < 2}
-      emptyMessage="Hacen falta datos de al menos dos días distintos para dibujar la evolución. Vuelve mañana."
+      isEmpty={data.length < 2 || isFlat}
+      emptyMessage={
+        isFlat && last
+          ? `Sin partidas clasificatorias en los últimos ${days} días. Sigues en ${formatTier(last.tier)} ${last.rank} con ${last.leaguePoints} LP.`
+          : "Hacen falta datos de al menos dos días distintos para dibujar la evolución. Vuelve mañana."
+      }
       table={
         <table className="w-full text-left">
           <thead className="text-muted">

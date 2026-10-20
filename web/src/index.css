@@ -23,6 +23,70 @@
 
   --spacing-panel: 1rem;
   --spacing-gap: 0.75rem;
+
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --animate-rise: rise 0.5s var(--ease-out-quint) var(--stagger, 0ms) both;
+  --animate-draw-bar: draw-bar 0.45s var(--ease-out-quint) calc(var(--stagger, 0ms) + 150ms) both;
+  --animate-fill-up: fill-up 0.9s var(--ease-out-quint) calc(var(--stagger, 0ms) + 100ms) both;
+  --animate-flare: flare 1.6s ease-out calc(var(--stagger, 0ms) + 100ms) both;
+  --animate-grow-x: grow-x 0.7s var(--ease-out-quint) calc(var(--stagger, 0ms) + 150ms) both;
+  --animate-panel-in: panel-in 0.3s var(--ease-out-quint) both;
+  --animate-banner-in: banner-in 1.4s var(--ease-out-quint) both;
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  }
+  @keyframes draw-bar {
+    from {
+      transform: scaleY(0);
+    }
+  }
+  @keyframes fill-up {
+    from {
+      transform: scaleY(0);
+    }
+  }
+  @keyframes flare {
+    70% {
+      filter: drop-shadow(0 0 6px var(--perf-4));
+    }
+  }
+  @keyframes grow-x {
+    from {
+      transform: scaleX(0);
+    }
+  }
+  @keyframes banner-in {
+    from {
+      transform: scale(1.06);
+    }
+  }
+  @keyframes panel-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+  @keyframes sheen {
+    from {
+      background-position: 100% 0;
+    }
+    to {
+      background-position: 0% 0;
+    }
+  }
+  @keyframes shimmer {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(100%);
+    }
+  }
 }
 
 @theme inline {
@@ -71,6 +135,7 @@
   --chart-axis: var(--muted);
   --chart-surface: var(--panel);
   --chart-band: var(--panel-2);
+  --banner-opacity: 0.3;
 
   color-scheme: light;
 }
@@ -94,8 +159,13 @@
   --perf-2: #9b7a3a;
   --perf-3: #d9b44a;
   --perf-4: #ff9f45;
+  --banner-opacity: 0.45;
 
   color-scheme: dark;
+}
+
+html {
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -132,5 +202,49 @@ body {
   &:disabled {
     cursor: not-allowed;
     opacity: 0.45;
+  }
+}
+
+@utility sheen {
+  position: relative;
+  overflow: hidden;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        105deg,
+        transparent 40%,
+        rgb(255 255 255 / 0.65) 50%,
+        transparent 60%
+      )
+      100% 0 / 300% 100% no-repeat;
+    mask: var(--sheen-mask, none) center / contain no-repeat;
+    pointer-events: none;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    &::after {
+      animation: sheen 1s ease-out 0.4s;
+    }
+    &:hover::after {
+      animation: sheen 1s ease-out;
+    }
+  }
+}
+
+@utility shimmer {
+  position: relative;
+  overflow: hidden;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.55), transparent);
+    transform: translateX(-100%);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    &::after {
+      animation: shimmer 1.2s ease-in-out 1s;
+    }
   }
 }

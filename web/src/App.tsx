@@ -51,7 +51,13 @@ function App() {
         tabIndex={-1}
         className="mx-auto w-full max-w-[1080px] flex-1 px-4 py-4 outline-none"
       >
-        <div id={`panel-${tab}`} role="tabpanel" aria-labelledby={`tab-${tab}`}>
+        <div
+          key={tab}
+          id={`panel-${tab}`}
+          role="tabpanel"
+          aria-labelledby={`tab-${tab}`}
+          className="motion-safe:animate-panel-in"
+        >
           {tab === "resumen" && <SummaryTab onShowChampions={() => selectTab("campeones")} />}
           {tab === "campeones" && <ChampionPool />}
           {tab === "rendimiento" && (
@@ -84,7 +90,9 @@ function SummaryTab({ onShowChampions }: { onShowChampions: () => void }) {
       <div className="order-2 grid gap-gap">
         {isPending ? (
           <Panel title="Historial">
-            <StateMessage kind="loading" message="Cargando partidas…" />
+            <div className="min-h-[800px] lg:min-h-0">
+              <StateMessage kind="loading" message="Cargando partidas…" />
+            </div>
           </Panel>
         ) : isError ? (
           <Panel title="Historial">

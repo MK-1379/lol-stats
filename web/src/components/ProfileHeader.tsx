@@ -1,8 +1,9 @@
 import { useIsFetching, useQueryClient } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
+import type { ChampionStat } from "../api/types";
 import { useSummary } from "../hooks/useSummary";
-import { useRankHistory } from "../hooks/useStats";
-import { formatRelative, profileIconUrl } from "../utils/format";
+import { useChampionStats, useRankHistory } from "../hooks/useStats";
+import { championSplashUrl, formatRelative, profileIconUrl, tierColor } from "../utils/format";
 
 type ProfileHeaderProps = {
   tabs: ReactNode;
@@ -11,18 +12,25 @@ type ProfileHeaderProps = {
 export function ProfileHeader({ tabs }: ProfileHeaderProps) {
   const { data, isPending, isError, error } = useSummary();
   const { data: snapshots } = useRankHistory(30);
+  const { data: champions } = useChampionStats();
+  const main = mostPlayed(champions);
   const queryClient = useQueryClient();
   const isFetching = useIsFetching() > 0;
   const lastSync = snapshots?.at(-1)?.takenAt;
 
   return (
-    <div className="border-b border-line bg-panel">
+    <div className="relative isolate overflow-hidden border-b border-line bg-panel">
+      {main && <Banner champion={main} />}
       <div className="mx-auto max-w-[1080px] px-4 pt-5">
         {isPending ? (
-          <div role="status" className="flex items-center gap-4 pb-5">
+          <div role="status" className="flex flex-wrap items-center gap-x-4 gap-y-3 pb-5">
             <span className="sr-only">Cargando perfil…</span>
-            <div className="size-[72px] rounded-ui bg-panel-2 motion-safe:animate-pulse" />
-            <div className="h-6 w-48 rounded-ui bg-panel-2 motion-safe:animate-pulse" />
+            <div className="size-14 shrink-0 rounded-ui bg-panel-2 motion-safe:animate-pulse sm:size-[72px]" />
+            <div className="min-w-0 flex-1 basis-48 space-y-2">
+              <div className="h-7 w-48 max-w-full rounded-ui bg-panel-2 motion-safe:animate-pulse" />
+              <div className="h-4 w-64 max-w-full rounded-ui bg-panel-2 motion-safe:animate-pulse" />
+            </div>
+            <div className="h-9 w-full rounded-ui bg-panel-2 motion-safe:animate-pulse sm:w-36" />
           </div>
         ) : isError ? (
           <p role="alert" className="pb-5 text-loss">
@@ -30,7 +38,11 @@ export function ProfileHeader({ tabs }: ProfileHeaderProps) {
           </p>
         ) : (
           <div className="flex flex-wrap items-center gap-x-4 gap-y-3 pb-5">
-            <ProfileIcon iconId={data.player.profileIconId} name={data.player.gameName} />
+            <ProfileIcon
+              iconId={data.player.profileIconId}
+              name={data.player.gameName}
+              tier={data.rank?.tier}
+            />
             <div className="min-w-0 flex-1 basis-48">
               <h1 className="text-name font-bold break-words">
                 {data.player.gameName}{" "}
@@ -64,14 +76,47 @@ export function ProfileHeader({ tabs }: ProfileHeaderProps) {
   );
 }
 
-function ProfileIcon({ iconId, name }: { iconId: number; name: string }) {
+function mostPlayed(champions: ChampionStat[] = []) {
+  return champions.reduce<ChampionStat | null>(
+    (best, champion) => (!best || champion.games > best.games ? champion : best),
+    null,
+  )?.champion;
+}
+
+function Banner({ champion }: { champion: string }) {
+  const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
-  const box = "size-14 shrink-0 rounded-ui border-2 border-gold sm:size-[72px]";
+
+  if (failed) return null;
+
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
+      <img
+        src={championSplashUrl(champion)}
+        alt=""
+        onLoad={() => setLoaded(true)}
+        onError={() => setFailed(true)}
+        className={`absolute inset-y-0 right-0 h-full w-full object-cover object-[50%_20%] transition-opacity duration-700 [mask-image:linear-gradient(to_right,transparent,black_60%)] sm:w-3/4 sm:[mask-image:linear-gradient(to_right,transparent,black_45%)] ${loaded ? "opacity-(--banner-opacity) motion-safe:animate-banner-in" : "opacity-0"}`}
+      />
+      <div className="absolute inset-0 bg-linear-to-t from-panel via-panel/40 to-transparent" />
+    </div>
+  );
+}
+
+function ProfileIcon({ iconId, name, tier }: { iconId: number; name: string; tier?: string }) {
+  const [failed, setFailed] = useState(false);
+  const color = tierColor(tier);
+  const box = "size-14 shrink-0 rounded-ui border-2 sm:size-[72px]";
+  const frame = {
+    borderColor: color,
+    boxShadow: `0 0 0 3px color-mix(in srgb, ${color} 22%, transparent), 0 0 18px color-mix(in srgb, ${color} 45%, transparent)`,
+  };
 
   if (failed) {
     return (
       <div
-        className={`${box} grid place-items-center bg-panel-2 font-display text-3xl font-bold text-gold`}
+        style={{ ...frame, color }}
+        className={`${box} grid place-items-center bg-panel-2 font-display text-3xl font-bold`}
       >
         {name.charAt(0)}
       </div>
@@ -85,6 +130,7 @@ function ProfileIcon({ iconId, name }: { iconId: number; name: string }) {
       width={72}
       height={72}
       onError={() => setFailed(true)}
+      style={frame}
       className={box}
     />
   );

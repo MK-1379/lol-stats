@@ -123,9 +123,33 @@ const CHAMPION_KEY_EXCEPTIONS: Record<string, string> = {
   LeBlanc: "Leblanc",
 };
 
+function championKey(championName: string) {
+  return CHAMPION_KEY_EXCEPTIONS[championName] ?? championName.replace(/[^A-Za-z0-9]/g, "");
+}
+
 export function championIconUrl(championName: string) {
-  const key = CHAMPION_KEY_EXCEPTIONS[championName] ?? championName.replace(/[^A-Za-z0-9]/g, "");
-  return `https://ddragon.leagueoflegends.com/cdn/${DDRAGON_VERSION}/img/champion/${key}.png`;
+  return `https://ddragon.leagueoflegends.com/cdn/${DDRAGON_VERSION}/img/champion/${championKey(championName)}.png`;
+}
+
+export function championSplashUrl(championName: string) {
+  return `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${championKey(championName)}_0.jpg`;
+}
+
+const TIER_COLORS: Record<string, string> = {
+  IRON: "#7b6a62",
+  BRONZE: "#b0703a",
+  SILVER: "#9aa8b4",
+  GOLD: "#d8ab4f",
+  PLATINUM: "#3fb3aa",
+  EMERALD: "#2fb36a",
+  DIAMOND: "#6c8cf0",
+  MASTER: "#b05ad8",
+  GRANDMASTER: "#dd5050",
+  CHALLENGER: "#f2c955",
+};
+
+export function tierColor(tier?: string) {
+  return (tier && TIER_COLORS[tier]) ?? "var(--gold)";
 }
 
 export function kdaTone(kda: number) {

@@ -25,9 +25,18 @@ export function ScoreBadge({ score, level, className = "size-6" }: ScoreBadgePro
   const fill = hexagonFill(score / 10);
 
   return (
-    <svg aria-hidden="true" viewBox="0 0 32 32" className={`shrink-0 ${className}`}>
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 32 32"
+      className={`shrink-0 overflow-visible ${level === 4 ? "motion-safe:animate-flare" : ""} ${className}`}
+    >
       <polygon points={hexagonPoints()} className="fill-panel-2" />
-      {fill.length > 0 && <polygon points={hexagonPoints(fill)} className={FILL[level]} />}
+      {fill.length > 0 && (
+        <polygon
+          points={hexagonPoints(fill)}
+          className={`origin-bottom [transform-box:fill-box] motion-safe:animate-fill-up ${FILL[level]}`}
+        />
+      )}
       <polygon
         points={hexagonPoints()}
         className={`fill-none ${STROKE[level]}`}

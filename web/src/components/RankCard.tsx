@@ -61,7 +61,7 @@ function RankBody({ rank }: { rank: Rank }) {
             className="h-1.5 rounded-full bg-panel-2"
           >
             <div
-              className="h-full rounded-full bg-gold"
+              className="shimmer h-full origin-left rounded-full bg-gold motion-safe:animate-grow-x"
               style={{ width: `${Math.min(rank.leaguePoints, 100)}%` }}
             />
           </div>

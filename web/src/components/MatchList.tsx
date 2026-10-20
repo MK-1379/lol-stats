@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import type { MatchItem } from "../api/types";
 import {
   csPerMinute,
@@ -12,6 +12,7 @@ import { performanceScore, scoreTone } from "../utils/score";
 import { ChampionIcon } from "./ChampionIcon";
 import { Scoreboard } from "./Scoreboard";
 import { Panel } from "./ui/Panel";
+import { PositionIcon } from "./ui/PositionIcon";
 import { ScoreBadge } from "./ui/ScoreBadge";
 import { SegmentedControl } from "./ui/SegmentedControl";
 
@@ -98,11 +99,17 @@ export function MatchList({ matches }: { matches: MatchItem[] }) {
       ) : (
         <>
           <ol
+            key={`${result}-${position}`}
             className="space-y-1.5 p-2"
             aria-label="Partidas, de la más reciente a la más antigua"
           >
-            {shown.map((match) => (
-              <MatchRow key={match.matchId} match={match} isBest={match.matchId === bestId} />
+            {shown.map((match, index) => (
+              <MatchRow
+                key={match.matchId}
+                match={match}
+                isBest={match.matchId === bestId}
+                order={index % PAGE_SIZE}
+              />
             ))}
           </ol>
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-panel py-2">
@@ -124,18 +131,33 @@ export function MatchList({ matches }: { matches: MatchItem[] }) {
   );
 }
 
-function MatchRow({ match, isBest }: { match: MatchItem; isBest: boolean }) {
+type MatchRowProps = {
+  match: MatchItem;
+  isBest: boolean;
+  order: number;
+};
+
+function MatchRow({ match, isBest, order }: MatchRowProps) {
   const [open, setOpen] = useState(false);
+  const [opened, setOpened] = useState(false);
   const { score, parts } = performanceScore(match);
   const scoreInfo = scoreTone(score);
   const detailsId = `details-${match.matchId}`;
   const when = formatRelative(match.playedAt);
   const tone = match.win
-    ? { row: "border-win bg-win-bg", text: "text-win", label: "Victoria" }
-    : { row: "border-loss bg-loss-bg", text: "text-loss", label: "Derrota" };
+    ? { row: "bg-win-bg before:bg-win", text: "text-win", label: "Victoria" }
+    : { row: "bg-loss-bg before:bg-loss", text: "text-loss", label: "Derrota" };
+
+  function toggle() {
+    setOpen((current) => !current);
+    setOpened(true);
+  }
 
   return (
-    <li className={`rounded-ui border-l-4 ${tone.row}`}>
+    <li
+      style={{ "--stagger": `${order * 60}ms` } as CSSProperties}
+      className={`relative overflow-hidden rounded-ui pl-1 before:absolute before:inset-y-0 before:left-0 before:w-1 before:origin-top before:content-[''] motion-safe:animate-rise motion-safe:before:animate-draw-bar ${tone.row}`}
+    >
       <div className="relative grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 gap-y-1.5 py-2 pr-2 pl-3 sm:grid-cols-[88px_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,0.9fr)_112px_32px] sm:gap-x-4 sm:py-2.5 sm:pr-1.5">
         <div className="col-start-1 row-start-2 flex min-w-0 items-baseline gap-2 sm:row-start-1 sm:block">
           <p className={`text-small font-bold ${tone.text}`}>{tone.label}</p>
@@ -153,7 +175,10 @@ function MatchRow({ match, isBest }: { match: MatchItem; isBest: boolean }) {
           <ChampionIcon name={match.champion} size="row" />
           <div className="min-w-0">
             <p className="truncate font-semibold">{match.champion}</p>
-            <p className="text-meta text-muted">{formatPosition(match.position)}</p>
+            <p className="flex items-center gap-1 text-meta text-muted">
+              <PositionIcon position={match.position} className="size-3.5" />
+              <span aria-hidden="true">{formatPosition(match.position)}</span>
+            </p>
           </div>
         </div>
 
@@ -220,7 +245,7 @@ function MatchRow({ match, isBest }: { match: MatchItem; isBest: boolean }) {
           type="button"
           aria-expanded={open}
           aria-controls={detailsId}
-          onClick={() => setOpen((current) => !current)}
+          onClick={toggle}
           className="col-start-3 row-start-2 grid size-6 place-items-center justify-self-end rounded-ui text-muted transition-colors after:absolute after:inset-0 after:rounded-ui after:content-[''] hover:text-ink hover:after:bg-ink/5 focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-brand sm:col-start-6 sm:row-start-1 sm:size-8"
         >
           <span className="sr-only">
@@ -229,7 +254,7 @@ function MatchRow({ match, isBest }: { match: MatchItem; isBest: boolean }) {
           <svg
             aria-hidden="true"
             viewBox="0 0 20 20"
-            className={`size-4 transition-transform motion-reduce:transition-none ${open ? "rotate-180" : ""}`}
+            className={`size-4 transition-transform duration-300 ease-out motion-reduce:transition-none ${open ? "rotate-180" : ""}`}
           >
             <path
               d="M5 7.5 10 12.5 15 7.5"
@@ -243,46 +268,51 @@ function MatchRow({ match, isBest }: { match: MatchItem; isBest: boolean }) {
         </button>
       </div>
 
-      {open && (
-        <div
-          id={detailsId}
-          className="space-y-4 rounded-br-ui border-t border-line bg-panel p-3"
-        >
-          <Scoreboard matchId={match.matchId} durationSeconds={match.durationSeconds} />
-          <div>
-            <p className="caption">Cómo se calcula tu puntuación</p>
-            <p className="mt-0.5 mb-2 text-meta text-muted">
-              Cada parte compara tu partida con un objetivo y aporta puntos a tu nota de 10.
-            </p>
-            <ul className="grid gap-x-6 gap-y-3 sm:grid-cols-5">
-              {parts.map((part) => (
-                <li key={part.label} className="text-meta">
-                  <div className="flex justify-between gap-2">
-                    <span className="text-muted">
-                      {part.label}{" "}
-                      <span className="text-faint">· {Math.round(part.weight * 100)}%</span>
-                    </span>
-                    <span className="font-semibold tabular-nums">
-                      +{(part.value * part.weight * 10).toFixed(1)}
-                      <span className="sr-only"> puntos</span>
-                    </span>
-                  </div>
-                  <div aria-hidden="true" className="mt-1 h-1 rounded-full bg-panel-2">
-                    <div
-                      className="h-full rounded-full bg-perf-3"
-                      style={{ width: `${part.value * 100}%` }}
-                    />
-                  </div>
-                  <p className="mt-1 text-faint tabular-nums">
-                    <span className="text-ink">{part.raw}</span>
-                    {part.target && ` · objetivo ${part.target}`}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </div>
+      <div
+        id={detailsId}
+        inert={!open}
+        className={`grid transition-[grid-template-rows] duration-350 ease-out motion-reduce:transition-none ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+      >
+        <div className="min-h-0 overflow-hidden">
+          {opened && (
+            <div className="space-y-4 rounded-br-ui border-t border-line bg-panel p-3 [--stagger:0ms]">
+              <Scoreboard matchId={match.matchId} durationSeconds={match.durationSeconds} />
+              <div>
+                <p className="caption">Cómo se calcula tu puntuación</p>
+                <p className="mt-0.5 mb-2 text-meta text-muted">
+                  Cada parte compara tu partida con un objetivo y aporta puntos a tu nota de 10.
+                </p>
+                <ul className="grid gap-x-6 gap-y-3 sm:grid-cols-5">
+                  {parts.map((part) => (
+                    <li key={part.label} className="text-meta">
+                      <div className="flex justify-between gap-2">
+                        <span className="text-muted">
+                          {part.label}{" "}
+                          <span className="text-faint">· {Math.round(part.weight * 100)}%</span>
+                        </span>
+                        <span className="font-semibold tabular-nums">
+                          +{(part.value * part.weight * 10).toFixed(1)}
+                          <span className="sr-only"> puntos</span>
+                        </span>
+                      </div>
+                      <div aria-hidden="true" className="mt-1 h-1 rounded-full bg-panel-2">
+                        <div
+                          className={`h-full origin-left rounded-full bg-perf-3 ${open ? "motion-safe:animate-grow-x" : ""}`}
+                          style={{ width: `${part.value * 100}%` }}
+                        />
+                      </div>
+                      <p className="mt-1 text-faint tabular-nums">
+                        <span className="text-ink">{part.raw}</span>
+                        {part.target && ` · objetivo ${part.target}`}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </li>
   );
 }

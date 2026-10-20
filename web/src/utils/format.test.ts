@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   championIconUrl,
+  championSplashUrl,
   csPerMinute,
   formatDuration,
   formatPosition,
   nextDivision,
   opggUrl,
+  tierColor,
 } from "./format";
 
 describe("formatDuration", () => {
@@ -58,5 +60,20 @@ describe("opggUrl", () => {
       "https://op.gg/lol/summoners/euw/sopa%20de%20macaco-EUW",
     );
     expect(opggUrl("Nüñez", "ES1")).toBe("https://op.gg/lol/summoners/euw/N%C3%BC%C3%B1ez-ES1");
+  });
+});
+
+describe("championSplashUrl", () => {
+  it("usa la clave de Data Dragon del campeón", () => {
+    expect(championSplashUrl("Cho'Gath")).toBe(
+      "https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Chogath_0.jpg",
+    );
+  });
+});
+
+describe("tierColor", () => {
+  it("devuelve el color del rango o el dorado si no hay rango", () => {
+    expect(tierColor("DIAMOND")).toBe("#6c8cf0");
+    expect(tierColor(undefined)).toBe("var(--gold)");
   });
 });
