@@ -11,6 +11,12 @@ export type Summary = {
     wins: number;
     losses: number;
   } | null;
+  peakRank: {
+    tier: string;
+    rank: string;
+    leaguePoints: number;
+    reachedAt: string;
+  } | null;
   stats: {
     games: number;
     wins: number;

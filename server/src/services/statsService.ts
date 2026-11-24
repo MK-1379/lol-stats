@@ -26,10 +26,33 @@ export function toTotalLp(tier: string, rank: string, leaguePoints: number) {
   return tierIndex * 400 + DIVISIONS.indexOf(rank) * 100 + leaguePoints;
 }
 
+type RankLevel = {
+  tier: string;
+  rank: string;
+  leaguePoints: number;
+  reachedAt: Date;
+};
+
+export function findPeak(levels: RankLevel[]) {
+  let peak: RankLevel | null = null;
+  let peakLp = -1;
+
+  for (const level of levels) {
+    const totalLp = toTotalLp(level.tier, level.rank, level.leaguePoints);
+    if (totalLp > peakLp || (totalLp === peakLp && peak && level.reachedAt < peak.reachedAt)) {
+      peak = level;
+      peakLp = totalLp;
+    }
+  }
+
+  return peak;
+}
+
 export async function getSummary() {
-  const [player, rank, games, wins, totals] = await Promise.all([
+  const [player, rank, levels, games, wins, totals] = await Promise.all([
     playerRepository.findPlayer(),
     playerRepository.findLatestRank(),
+    playerRepository.findRankLevels(),
     matchRepository.countMatches(),
     matchRepository.countWins(),
     matchRepository.sumKda(),
@@ -40,6 +63,14 @@ export async function getSummary() {
   }
 
   const { kills, deaths, assists } = totals._sum;
+  const peak = findPeak(
+    levels.map((level) => ({
+      tier: level.tier,
+      rank: level.rank,
+      leaguePoints: level.leaguePoints,
+      reachedAt: level._min.takenAt ?? new Date(0),
+    })),
+  );
 
   return {
     player: {
@@ -54,6 +85,7 @@ export async function getSummary() {
       wins: rank.wins,
       losses: rank.losses,
     },
+    peakRank: peak,
     stats: {
       games,
       wins,

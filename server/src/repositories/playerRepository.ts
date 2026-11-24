@@ -19,3 +19,11 @@ export function findRankHistory(since: Date) {
     orderBy: { takenAt: "asc" },
   });
 }
+
+export function findRankLevels() {
+  return prisma.rankSnapshot.groupBy({
+    by: ["tier", "rank", "leaguePoints"],
+    where: { queueType: SOLO_QUEUE },
+    _min: { takenAt: true },
+  });
+}

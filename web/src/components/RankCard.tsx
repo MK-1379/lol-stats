@@ -1,5 +1,6 @@
+import type { Summary } from "../api/types";
 import { useSummary } from "../hooks/useSummary";
-import { formatTier, nextDivision, winrateTone } from "../utils/format";
+import { formatShortDate, formatTier, nextDivision, winrateTone } from "../utils/format";
 import { RankEmblem } from "./RankEmblem";
 import { Panel } from "./ui/Panel";
 import { StateMessage } from "./ui/StateMessage";
@@ -16,21 +17,16 @@ export function RankCard() {
       ) : !data.rank ? (
         <StateMessage kind="empty" message="Sin clasificar esta temporada." />
       ) : (
-        <RankBody rank={data.rank} />
+        <RankBody rank={data.rank} peak={data.peakRank} />
       )}
     </Panel>
   );
 }
 
-type Rank = {
-  tier: string;
-  rank: string;
-  leaguePoints: number;
-  wins: number;
-  losses: number;
-};
+type Rank = NonNullable<Summary["rank"]>;
+type Peak = Summary["peakRank"];
 
-function RankBody({ rank }: { rank: Rank }) {
+function RankBody({ rank, peak }: { rank: Rank; peak: Peak }) {
   const games = rank.wins + rank.losses;
   const winrate = games ? Math.round((rank.wins / games) * 1000) / 10 : 0;
   const next = nextDivision(rank.tier, rank.rank);
@@ -48,6 +44,7 @@ function RankBody({ rank }: { rank: Rank }) {
             {rank.wins}V {rank.losses}D ·{" "}
             <span className={`font-semibold ${winrateTone(winrate)}`}>{winrate}%</span>
           </p>
+          {peak && <PeakLine rank={rank} peak={peak} />}
         </div>
       </div>
       {next && (
@@ -71,5 +68,22 @@ function RankBody({ rank }: { rank: Rank }) {
         </div>
       )}
     </div>
+  );
+}
+
+function PeakLine({ rank, peak }: { rank: Rank; peak: NonNullable<Peak> }) {
+  const isCurrentPeak =
+    peak.tier === rank.tier && peak.rank === rank.rank && peak.leaguePoints === rank.leaguePoints;
+
+  return (
+    <p className="mt-1 text-small text-muted tabular-nums">
+      Peak:{" "}
+      <span className="font-semibold whitespace-nowrap text-gold">
+        {formatTier(peak.tier)} {peak.rank} · {peak.leaguePoints} LP
+      </span>{" "}
+      <span className="whitespace-nowrap">
+        {isCurrentPeak ? "(ahora mismo)" : `(${formatShortDate(peak.reachedAt)})`}
+      </span>
+    </p>
   );
 }
