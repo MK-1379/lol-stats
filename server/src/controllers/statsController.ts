@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
 import * as coachService from "../services/coachService.js";
+import * as coachSummaryService from "../services/coachSummaryService.js";
 import * as statsService from "../services/statsService.js";
 
 const matchesQuerySchema = z.object({
@@ -55,4 +56,8 @@ export async function getTrends(req: Request, res: Response) {
 export async function getCoach(req: Request, res: Response) {
   const { last } = coachQuerySchema.parse(req.query);
   res.json(await coachService.getCoachReport(last));
+}
+
+export async function getCoachSummary(req: Request, res: Response) {
+  res.json(await coachSummaryService.getCoachSummary());
 }

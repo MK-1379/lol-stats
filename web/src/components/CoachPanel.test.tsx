@@ -45,7 +45,16 @@ const report: CoachReport = {
 };
 
 function renderPanel(response: Response) {
-  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response));
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((url: string) =>
+      Promise.resolve(
+        url === "/api/coach/summary"
+          ? new Response(JSON.stringify({ error: "No configurado" }), { status: 503 })
+          : response,
+      ),
+    ),
+  );
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>

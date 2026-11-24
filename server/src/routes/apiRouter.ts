@@ -14,3 +14,4 @@ apiRouter.get("/champions", statsController.getChampions);
 apiRouter.get("/rank-history", statsController.getRankHistory);
 apiRouter.get("/trends", statsController.getTrends);
 apiRouter.get("/coach", statsController.getCoach);
+apiRouter.get("/coach/summary", statsController.getCoachSummary);
