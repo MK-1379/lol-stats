@@ -1,29 +1,27 @@
 import { prisma } from "../db/prisma.js";
 
-const SOLO_QUEUE = "RANKED_SOLO_5x5";
-
 export function findPlayer() {
   return prisma.player.findFirst();
 }
 
-export function findLatestRank() {
+export function findLatestRank(queueType: string) {
   return prisma.rankSnapshot.findFirst({
-    where: { queueType: SOLO_QUEUE },
+    where: { queueType },
     orderBy: { takenAt: "desc" },
   });
 }
 
-export function findRankHistory(since: Date) {
+export function findRankHistory(since: Date, queueType: string) {
   return prisma.rankSnapshot.findMany({
-    where: { queueType: SOLO_QUEUE, takenAt: { gte: since } },
+    where: { queueType, takenAt: { gte: since } },
     orderBy: { takenAt: "asc" },
   });
 }
 
-export function findRankLevels() {
+export function findRankLevels(queueType: string) {
   return prisma.rankSnapshot.groupBy({
     by: ["tier", "rank", "leaguePoints"],
-    where: { queueType: SOLO_QUEUE },
+    where: { queueType },
     _min: { takenAt: true },
   });
 }

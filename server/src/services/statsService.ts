@@ -1,3 +1,9 @@
+import {
+  type QueueFilter,
+  RANKED_QUEUES,
+  type RankedQueue,
+  rankedQueues,
+} from "../config/queues.js";
 import { HttpError } from "../middlewares/errorHandler.js";
 import * as matchRepository from "../repositories/matchRepository.js";
 import * as playerRepository from "../repositories/playerRepository.js";
@@ -48,21 +54,17 @@ export function findPeak(levels: RankLevel[]) {
   return peak;
 }
 
-export async function getSummary() {
-  const [player, rank, levels, games, wins, totals] = await Promise.all([
-    playerRepository.findPlayer(),
-    playerRepository.findLatestRank(),
-    playerRepository.findRankLevels(),
-    matchRepository.countMatches(),
-    matchRepository.countWins(),
-    matchRepository.sumKda(),
+async function getQueueRank(queue: RankedQueue) {
+  const { queueType } = RANKED_QUEUES[queue];
+  const [rank, levels] = await Promise.all([
+    playerRepository.findLatestRank(queueType),
+    playerRepository.findRankLevels(queueType),
   ]);
 
-  if (!player) {
-    throw new HttpError(404, "Todavía no hay datos: espera a la primera sincronización");
+  if (!rank) {
+    return null;
   }
 
-  const { kills, deaths, assists } = totals._sum;
   const peak = findPeak(
     levels.map((level) => ({
       tier: level.tier,
@@ -73,19 +75,38 @@ export async function getSummary() {
   );
 
   return {
+    queue,
+    tier: rank.tier,
+    rank: rank.rank,
+    leaguePoints: rank.leaguePoints,
+    wins: rank.wins,
+    losses: rank.losses,
+    peak,
+  };
+}
+
+export async function getSummary(queue: QueueFilter) {
+  const [player, ranks, games, wins, totals] = await Promise.all([
+    playerRepository.findPlayer(),
+    Promise.all(rankedQueues(queue).map(getQueueRank)),
+    matchRepository.countMatches(queue),
+    matchRepository.countWins(queue),
+    matchRepository.sumKda(queue),
+  ]);
+
+  if (!player) {
+    throw new HttpError(404, "Todavía no hay datos: espera a la primera sincronización");
+  }
+
+  const { kills, deaths, assists } = totals._sum;
+
+  return {
     player: {
       gameName: player.gameName,
       tagLine: player.tagLine,
       profileIconId: player.profileIconId,
     },
-    rank: rank && {
-      tier: rank.tier,
-      rank: rank.rank,
-      leaguePoints: rank.leaguePoints,
-      wins: rank.wins,
-      losses: rank.losses,
-    },
-    peakRank: peak,
+    ranks: ranks.filter((rank) => rank !== null),
     stats: {
       games,
       wins,
@@ -95,10 +116,14 @@ export async function getSummary() {
   };
 }
 
-export async function getMatches(limit: number, offset: number) {
+function queueName(queueId: number): RankedQueue {
+  return queueId === RANKED_QUEUES.flex.queueId ? "flex" : "solo";
+}
+
+export async function getMatches(limit: number, offset: number, queue: QueueFilter) {
   const [rows, total] = await Promise.all([
-    matchRepository.findMatches(limit, offset),
-    matchRepository.countMatches(),
+    matchRepository.findMatches(limit, offset, queue),
+    matchRepository.countMatches(queue),
   ]);
 
   return {
@@ -107,6 +132,7 @@ export async function getMatches(limit: number, offset: number) {
     offset,
     items: rows.map((row) => ({
       matchId: row.matchId,
+      queue: queueName(row.match.queueId),
       playedAt: row.match.gameCreation,
       durationSeconds: row.match.gameDuration,
       champion: row.champion.name,
@@ -179,10 +205,10 @@ export async function getScoreboard(matchId: string) {
   };
 }
 
-export async function getChampionStats() {
+export async function getChampionStats(queue: QueueFilter) {
   const [stats, wins] = await Promise.all([
-    matchRepository.statsByChampion(),
-    matchRepository.winsByChampion(),
+    matchRepository.statsByChampion(queue),
+    matchRepository.winsByChampion(queue),
   ]);
 
   const champions = await matchRepository.findChampionsByIds(
@@ -212,9 +238,9 @@ export async function getChampionStats() {
     .sort((a, b) => b.games - a.games);
 }
 
-export async function getRankHistory(days: number) {
+export async function getRankHistory(days: number, queue: RankedQueue) {
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-  const snapshots = await playerRepository.findRankHistory(since);
+  const snapshots = await playerRepository.findRankHistory(since, RANKED_QUEUES[queue].queueType);
 
   return snapshots.map((snapshot) => ({
     takenAt: snapshot.takenAt,
@@ -225,8 +251,8 @@ export async function getRankHistory(days: number) {
   }));
 }
 
-export async function getTrends(last: number) {
-  const rows = await matchRepository.findLastMatches(last);
+export async function getTrends(last: number, queue: QueueFilter) {
+  const rows = await matchRepository.findLastMatches(last, queue);
 
   return rows.reverse().map((row) => ({
     matchId: row.matchId,

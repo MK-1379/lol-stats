@@ -1,15 +1,19 @@
 import { useIsFetching, useQueryClient } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import type { ChampionStat } from "../api/types";
+import { useQueue } from "../hooks/useQueue";
 import { useSummary } from "../hooks/useSummary";
 import { useChampionStats, useRankHistory } from "../hooks/useStats";
 import { championSplashUrl, formatRelative, profileIconUrl, tierColor } from "../utils/format";
+import { QUEUE_OPTIONS } from "../utils/queue";
+import { SegmentedControl } from "./ui/SegmentedControl";
 
 type ProfileHeaderProps = {
   tabs: ReactNode;
 };
 
 export function ProfileHeader({ tabs }: ProfileHeaderProps) {
+  const { queue, setQueue } = useQueue();
   const { data, isPending, isError, error } = useSummary();
   const { data: snapshots } = useRankHistory(30);
   const { data: champions } = useChampionStats();
@@ -41,7 +45,7 @@ export function ProfileHeader({ tabs }: ProfileHeaderProps) {
             <ProfileIcon
               iconId={data.player.profileIconId}
               name={data.player.gameName}
-              tier={data.rank?.tier}
+              tier={data.ranks[0]?.tier}
             />
             <div className="min-w-0 flex-1 basis-48">
               <h1 className="text-name font-bold break-words">
@@ -50,15 +54,10 @@ export function ProfileHeader({ tabs }: ProfileHeaderProps) {
               </h1>
               <p className="mt-1 flex flex-wrap items-center gap-x-2 text-small text-muted">
                 <span className="rounded-ui bg-panel-2 px-1.5 font-semibold text-ink">EUW</span>
-                <span>Clasificatoria Solo/Dúo</span>
-                {lastSync && (
-                  <>
-                    <span aria-hidden="true">·</span>
-                    <span>Sincronizado {formatRelative(lastSync)}</span>
-                  </>
-                )}
+                {lastSync && <span>Sincronizado {formatRelative(lastSync)}</span>}
               </p>
             </div>
+            <SegmentedControl label="Cola" options={QUEUE_OPTIONS} value={queue} onChange={setQueue} />
             <button
               type="button"
               className="btn w-full sm:w-auto"

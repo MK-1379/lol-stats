@@ -11,8 +11,10 @@ import {
   YAxis,
 } from "recharts";
 import type { RankPoint } from "../../api/types";
+import { useQueue } from "../../hooks/useQueue";
 import { useRankHistory } from "../../hooks/useStats";
 import { formatDate, formatShortDate, formatTier, formatTotalLp } from "../../utils/format";
+import { queueName, rankHistoryQueue } from "../../utils/queue";
 import { divisionBands, formatLpChange, lpChange } from "../../utils/trends";
 import { SegmentedControl } from "../ui/SegmentedControl";
 import { ChartCard } from "./ChartCard";
@@ -47,6 +49,7 @@ const PERIODS = [
 
 export function RankChart() {
   const [days, setDays] = useState(30);
+  const rankQueue = rankHistoryQueue(useQueue().queue);
   const { data: snapshots = [], isPending, error } = useRankHistory(days);
   const data = lastSnapshotPerDay(snapshots);
 
@@ -59,7 +62,7 @@ export function RankChart() {
   return (
     <ChartCard
       title="Evolución del rango"
-      description={`Tu rango al final de cada día, últimos ${days} días`}
+      description={`${queueName(rankQueue)}: tu rango al final de cada día, últimos ${days} días`}
       headline={
         last && (
           <p className="mb-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">

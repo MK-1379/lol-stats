@@ -46,7 +46,7 @@ describe("API REST", () => {
     const response = await request(app).get("/api/matches");
 
     expect(response.status).toBe(200);
-    expect(matchRepository.findMatches).toHaveBeenCalledWith(20, 0);
+    expect(matchRepository.findMatches).toHaveBeenCalledWith(20, 0, "all");
     expect(response.body).toEqual({ total: 0, limit: 20, offset: 0, items: [] });
   });
 
@@ -97,15 +97,75 @@ describe("API REST", () => {
       _sum: { kills: null, deaths: null, assists: null },
     } as never);
 
-    const response = await request(app).get("/api/summary");
+    const response = await request(app).get("/api/summary?queue=solo");
 
     expect(response.status).toBe(200);
-    expect(response.body.peakRank).toEqual({
+    expect(playerRepository.findLatestRank).toHaveBeenCalledWith("RANKED_SOLO_5x5");
+    expect(response.body.ranks).toHaveLength(1);
+    expect(response.body.ranks[0].peak).toEqual({
       tier: "EMERALD",
       rank: "II",
       leaguePoints: 45,
       reachedAt: "2026-11-10T10:00:00.000Z",
     });
+  });
+
+  it("GET /api/summary con queue=all devuelve solo las colas en las que estás clasificado", async () => {
+    vi.mocked(playerRepository.findPlayer).mockResolvedValue({
+      gameName: "M0n0kuum44",
+      tagLine: "SSJ",
+      profileIconId: 1,
+    } as never);
+    vi.mocked(playerRepository.findLatestRank).mockImplementation(((queueType: string) =>
+      Promise.resolve(
+        queueType === "RANKED_FLEX_SR"
+          ? { tier: "GOLD", rank: "I", leaguePoints: 10, wins: 3, losses: 2 }
+          : null,
+      )) as never);
+    vi.mocked(playerRepository.findRankLevels).mockResolvedValue([] as never);
+    vi.mocked(matchRepository.countMatches).mockResolvedValue(0);
+    vi.mocked(matchRepository.countWins).mockResolvedValue(0);
+    vi.mocked(matchRepository.sumKda).mockResolvedValue({
+      _sum: { kills: null, deaths: null, assists: null },
+    } as never);
+
+    const response = await request(app).get("/api/summary");
+
+    expect(response.status).toBe(200);
+    expect(response.body.ranks).toEqual([
+      { queue: "flex", tier: "GOLD", rank: "I", leaguePoints: 10, wins: 3, losses: 2, peak: null },
+    ]);
+    expect(matchRepository.countMatches).toHaveBeenCalledWith("all");
+  });
+
+  it("GET /api/matches rechaza una cola desconocida con 400", async () => {
+    const response = await request(app).get("/api/matches?queue=aram");
+
+    expect(response.status).toBe(400);
+    expect(response.body.details).toHaveProperty("queue");
+  });
+
+  it("GET /api/matches marca cada partida con su cola", async () => {
+    vi.mocked(matchRepository.findMatches).mockResolvedValue([
+      {
+        matchId: "EUW1_2",
+        teamPosition: "MIDDLE",
+        win: true,
+        kills: 1,
+        deaths: 1,
+        assists: 1,
+        cs: 100,
+        visionScore: 10,
+        champion: { name: "Ahri" },
+        match: { queueId: 440, gameCreation: new Date("2026-11-24T10:00:00Z"), gameDuration: 1500 },
+      },
+    ] as never);
+    vi.mocked(matchRepository.countMatches).mockResolvedValue(1);
+
+    const response = await request(app).get("/api/matches?queue=flex");
+
+    expect(matchRepository.findMatches).toHaveBeenCalledWith(20, 0, "flex");
+    expect(response.body.items[0].queue).toBe("flex");
   });
 
   it("GET /api/champions calcula winrate y KDA por campeón", async () => {
@@ -214,6 +274,6 @@ describe("API REST", () => {
     const response = await request(app).get("/api/coach");
 
     expect(response.status).toBe(404);
-    expect(matchRepository.findCoachMatches).toHaveBeenCalledWith(20);
+    expect(matchRepository.findCoachMatches).toHaveBeenCalledWith(20, "all");
   });
 });

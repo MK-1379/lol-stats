@@ -1,10 +1,18 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
+import { QUEUE_FILTERS } from "../config/queues.js";
 import * as coachService from "../services/coachService.js";
 import * as coachSummaryService from "../services/coachSummaryService.js";
 import * as statsService from "../services/statsService.js";
 
+const queueSchema = z.enum(QUEUE_FILTERS).default("all");
+
+const queueQuerySchema = z.object({
+  queue: queueSchema,
+});
+
 const matchesQuerySchema = z.object({
+  queue: queueSchema,
   limit: z.coerce.number().int().min(1).max(100).default(20),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -14,24 +22,28 @@ const matchParamsSchema = z.object({
 });
 
 const rankHistoryQuerySchema = z.object({
+  queue: z.enum(["solo", "flex"]).default("solo"),
   days: z.coerce.number().int().min(1).max(365).default(30),
 });
 
 const trendsQuerySchema = z.object({
+  queue: queueSchema,
   last: z.coerce.number().int().min(1).max(100).default(20),
 });
 
 const coachQuerySchema = z.object({
+  queue: queueSchema,
   last: z.coerce.number().int().min(coachService.MIN_GAMES).max(100).default(20),
 });
 
 export async function getSummary(req: Request, res: Response) {
-  res.json(await statsService.getSummary());
+  const { queue } = queueQuerySchema.parse(req.query);
+  res.json(await statsService.getSummary(queue));
 }
 
 export async function getMatches(req: Request, res: Response) {
-  const { limit, offset } = matchesQuerySchema.parse(req.query);
-  res.json(await statsService.getMatches(limit, offset));
+  const { limit, offset, queue } = matchesQuerySchema.parse(req.query);
+  res.json(await statsService.getMatches(limit, offset, queue));
 }
 
 export async function getScoreboard(req: Request, res: Response) {
@@ -40,24 +52,26 @@ export async function getScoreboard(req: Request, res: Response) {
 }
 
 export async function getChampions(req: Request, res: Response) {
-  res.json(await statsService.getChampionStats());
+  const { queue } = queueQuerySchema.parse(req.query);
+  res.json(await statsService.getChampionStats(queue));
 }
 
 export async function getRankHistory(req: Request, res: Response) {
-  const { days } = rankHistoryQuerySchema.parse(req.query);
-  res.json(await statsService.getRankHistory(days));
+  const { days, queue } = rankHistoryQuerySchema.parse(req.query);
+  res.json(await statsService.getRankHistory(days, queue));
 }
 
 export async function getTrends(req: Request, res: Response) {
-  const { last } = trendsQuerySchema.parse(req.query);
-  res.json(await statsService.getTrends(last));
+  const { last, queue } = trendsQuerySchema.parse(req.query);
+  res.json(await statsService.getTrends(last, queue));
 }
 
 export async function getCoach(req: Request, res: Response) {
-  const { last } = coachQuerySchema.parse(req.query);
-  res.json(await coachService.getCoachReport(last));
+  const { last, queue } = coachQuerySchema.parse(req.query);
+  res.json(await coachService.getCoachReport(last, queue));
 }
 
 export async function getCoachSummary(req: Request, res: Response) {
-  res.json(await coachSummaryService.getCoachSummary());
+  const { queue } = queueQuerySchema.parse(req.query);
+  res.json(await coachSummaryService.getCoachSummary(queue));
 }
