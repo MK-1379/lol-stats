@@ -141,3 +141,9 @@ export type CoachReport = {
   strengths: CoachStrength[];
   weeklyGoal: WeeklyGoal | null;
 };
+
+export type CoachSummary = {
+  text: string;
+  generatedAt: string;
+  model: string;
+};

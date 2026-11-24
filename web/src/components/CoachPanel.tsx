@@ -4,6 +4,7 @@ import type { CoachReport, CoachStrength, CoachTip, WeeklyGoal } from "../api/ty
 import { useCoach } from "../hooks/useCoach";
 import { formatCoachTarget, formatCoachValue } from "../utils/coach";
 import { formatPosition } from "../utils/format";
+import { CoachSummaryPanel } from "./CoachSummaryPanel";
 import { Panel } from "./ui/Panel";
 import { PositionIcon } from "./ui/PositionIcon";
 import { StateMessage } from "./ui/StateMessage";
@@ -37,29 +38,32 @@ export function CoachPanel() {
 function CoachBody({ report }: { report: CoachReport }) {
   return (
     <div className="grid items-start gap-gap lg:grid-cols-[minmax(0,1fr)_300px]">
-      <Panel
-        title="Consejos del coach"
-        aside={
-          <p className="flex items-center gap-1.5 text-meta text-muted tabular-nums">
-            <PositionIcon position={report.position} />
-            {formatPosition(report.position)} · {report.gamesAnalyzed} partidas ·{" "}
-            {report.winrate}% victorias
-          </p>
-        }
-      >
-        {report.tips.length === 0 ? (
-          <StateMessage
-            kind="empty"
-            message="Cumples todos los objetivos en tu posición. Sigue así."
-          />
-        ) : (
-          <ol aria-label="Consejos" className="divide-y divide-line">
-            {report.tips.map((tip, index) => (
-              <TipItem key={tip.metric} tip={tip} index={index} />
-            ))}
-          </ol>
-        )}
-      </Panel>
+      <div className="grid gap-gap">
+        <CoachSummaryPanel />
+        <Panel
+          title="Consejos del coach"
+          aside={
+            <p className="flex items-center gap-1.5 text-meta text-muted tabular-nums">
+              <PositionIcon position={report.position} />
+              {formatPosition(report.position)} · {report.gamesAnalyzed} partidas ·{" "}
+              {report.winrate}% victorias
+            </p>
+          }
+        >
+          {report.tips.length === 0 ? (
+            <StateMessage
+              kind="empty"
+              message="Cumples todos los objetivos en tu posición. Sigue así."
+            />
+          ) : (
+            <ol aria-label="Consejos" className="divide-y divide-line">
+              {report.tips.map((tip, index) => (
+                <TipItem key={tip.metric} tip={tip} index={index} />
+              ))}
+            </ol>
+          )}
+        </Panel>
+      </div>
 
       <div className="grid gap-gap">
         <GoalPanel goal={report.weeklyGoal} />

@@ -7,6 +7,9 @@ export default defineConfig({
       DATABASE_URL: "mysql://test:test@localhost:3306/test",
       RIOT_GAME_NAME: "Test",
       RIOT_TAG_LINE: "TEST",
+      AI_API_KEY: "test-ai",
+      AI_BASE_URL: "https://api.test/v1",
+      AI_MODEL: "test-model",
     },
   },
 });

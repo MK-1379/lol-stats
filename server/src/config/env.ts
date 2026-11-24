@@ -11,6 +11,9 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().default(3000),
   CORS_ORIGINS: z.string().default("http://localhost:5173,http://localhost:8080"),
   TRUST_PROXY: z.coerce.number().int().min(0).default(1),
+  AI_API_KEY: z.string().default(""),
+  AI_BASE_URL: z.string().url().default("https://api.groq.com/openai/v1"),
+  AI_MODEL: z.string().default("openai/gpt-oss-120b"),
 });
 
 export const env = envSchema.parse(process.env);

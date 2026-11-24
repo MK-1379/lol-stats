@@ -26,6 +26,9 @@ services:
       RIOT_GAME_NAME: ${RIOT_GAME_NAME}
       RIOT_TAG_LINE: ${RIOT_TAG_LINE}
       TRUST_PROXY: ${TRUST_PROXY:-1}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_BASE_URL: ${AI_BASE_URL:-https://api.groq.com/openai/v1}
+      AI_MODEL: ${AI_MODEL:-openai/gpt-oss-120b}
     ports:
       - "127.0.0.1:3000:3000"
     depends_on:
