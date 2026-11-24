@@ -1,32 +1,56 @@
-import type { Summary } from "../api/types";
+import type { RankInfo } from "../api/types";
+import { useQueue } from "../hooks/useQueue";
 import { useSummary } from "../hooks/useSummary";
 import { formatShortDate, formatTier, nextDivision, winrateTone } from "../utils/format";
+import { queueName } from "../utils/queue";
 import { RankEmblem } from "./RankEmblem";
 import { Panel } from "./ui/Panel";
 import { StateMessage } from "./ui/StateMessage";
 
 export function RankCard() {
+  const { queue } = useQueue();
   const { data, isPending, isError, error } = useSummary();
+  const title = queue === "all" ? "Clasificatoria" : queueName(queue);
+
+  if (isPending) {
+    return (
+      <Panel title={title}>
+        <StateMessage kind="loading" message="Cargando rango…" />
+      </Panel>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Panel title={title}>
+        <StateMessage kind="error" message={`No se pudo cargar el rango: ${error.message}`} />
+      </Panel>
+    );
+  }
+
+  if (data.ranks.length === 0) {
+    return (
+      <Panel title={title}>
+        <StateMessage kind="empty" message="Sin clasificar esta temporada." />
+      </Panel>
+    );
+  }
 
   return (
-    <Panel title="Clasificatoria Solo/Dúo">
-      {isPending ? (
-        <StateMessage kind="loading" message="Cargando rango…" />
-      ) : isError ? (
-        <StateMessage kind="error" message={`No se pudo cargar el rango: ${error.message}`} />
-      ) : !data.rank ? (
-        <StateMessage kind="empty" message="Sin clasificar esta temporada." />
-      ) : (
-        <RankBody rank={data.rank} peak={data.peakRank} />
-      )}
-    </Panel>
+    <div className="grid gap-gap">
+      {data.ranks.map((rank) => (
+        <Panel key={rank.queue} title={queueName(rank.queue)}>
+          <RankBody rank={rank} />
+        </Panel>
+      ))}
+    </div>
   );
 }
 
-type Rank = NonNullable<Summary["rank"]>;
-type Peak = Summary["peakRank"];
+type Peak = NonNullable<RankInfo["peak"]>;
 
-function RankBody({ rank, peak }: { rank: Rank; peak: Peak }) {
+function RankBody({ rank }: { rank: RankInfo }) {
+  const peak = rank.peak;
   const games = rank.wins + rank.losses;
   const winrate = games ? Math.round((rank.wins / games) * 1000) / 10 : 0;
   const next = nextDivision(rank.tier, rank.rank);
@@ -71,7 +95,7 @@ function RankBody({ rank, peak }: { rank: Rank; peak: Peak }) {
   );
 }
 
-function PeakLine({ rank, peak }: { rank: Rank; peak: NonNullable<Peak> }) {
+function PeakLine({ rank, peak }: { rank: RankInfo; peak: Peak }) {
   const isCurrentPeak =
     peak.tier === rank.tier && peak.rank === rank.rank && peak.leaguePoints === rank.leaguePoints;
 

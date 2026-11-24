@@ -9,6 +9,7 @@ import "@fontsource/source-sans-3/700.css";
 import { ApiError } from "./api/client";
 import "./index.css";
 import App from "./App.tsx";
+import { QueueProvider } from "./context/QueueProvider";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,7 +24,9 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <App />
+      <QueueProvider>
+        <App />
+      </QueueProvider>
     </QueryClientProvider>
   </StrictMode>,
 );

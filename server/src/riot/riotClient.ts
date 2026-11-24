@@ -105,8 +105,8 @@ export function getAccountByRiotId(gameName: string, tagLine: string) {
   return riotFetch(url, accountSchema);
 }
 
-export function getMatchIds(puuid: string, count = 20) {
-  const url = `${REGIONAL}/lol/match/v5/matches/by-puuid/${puuid}/ids?queue=420&count=${count}`;
+export function getMatchIds(puuid: string, queueId: number, count = 20) {
+  const url = `${REGIONAL}/lol/match/v5/matches/by-puuid/${puuid}/ids?queue=${queueId}&count=${count}`;
   return riotFetch(url, z.array(z.string()));
 }
 

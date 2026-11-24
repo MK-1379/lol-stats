@@ -1,5 +1,6 @@
 import * as llmClient from "../ai/llmClient.js";
 import { env } from "../config/env.js";
+import type { QueueFilter } from "../config/queues.js";
 import { HttpError } from "../middlewares/errorHandler.js";
 import { getCoachReport } from "./coachService.js";
 
@@ -26,12 +27,12 @@ export const SYSTEM_INSTRUCTION = [
 
 const CACHE_TIME_ZONE = "Europe/Madrid";
 
-let cache: { day: string; summary: CoachSummary } | null = null;
-let pending: Promise<CoachSummary> | null = null;
+const cache = new Map<QueueFilter, { day: string; summary: CoachSummary }>();
+const pending = new Map<QueueFilter, Promise<CoachSummary>>();
 
 export function clearCoachSummaryCache() {
-  cache = null;
-  pending = null;
+  cache.clear();
+  pending.clear();
 }
 
 export function todayKey(now = new Date()) {
@@ -75,8 +76,8 @@ export function buildCoachPrompt(report: CoachReport) {
   return `Informe del jugador:\n${JSON.stringify(readable, null, 2)}`;
 }
 
-async function generateSummary(): Promise<CoachSummary> {
-  const report = await getCoachReport(20);
+async function generateSummary(queue: QueueFilter): Promise<CoachSummary> {
+  const report = await getCoachReport(20, queue);
 
   try {
     const text = await llmClient.generateText(SYSTEM_INSTRUCTION, buildCoachPrompt(report));
@@ -90,26 +91,29 @@ async function generateSummary(): Promise<CoachSummary> {
   }
 }
 
-export async function getCoachSummary() {
+export async function getCoachSummary(queue: QueueFilter) {
   if (!llmClient.isLlmConfigured()) {
     throw new HttpError(503, "El resumen con IA no está configurado");
   }
 
   const day = todayKey();
-  if (cache?.day === day) {
-    return cache.summary;
+  const cached = cache.get(queue);
+  if (cached?.day === day) {
+    return cached.summary;
   }
 
-  if (!pending) {
-    pending = generateSummary()
+  let request = pending.get(queue);
+  if (!request) {
+    request = generateSummary(queue)
       .then((summary) => {
-        cache = { day, summary };
+        cache.set(queue, { day, summary });
         return summary;
       })
       .finally(() => {
-        pending = null;
+        pending.delete(queue);
       });
+    pending.set(queue, request);
   }
 
-  return pending;
+  return request;
 }

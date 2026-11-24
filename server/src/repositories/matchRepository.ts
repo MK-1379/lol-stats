@@ -1,7 +1,13 @@
+import { type QueueFilter, queueIds } from "../config/queues.js";
 import { prisma } from "../db/prisma.js";
 
-export function findMatches(limit: number, offset: number) {
+function byQueue(queue: QueueFilter) {
+  return { match: { queueId: { in: queueIds(queue) } } };
+}
+
+export function findMatches(limit: number, offset: number, queue: QueueFilter) {
   return prisma.matchParticipant.findMany({
+    where: byQueue(queue),
     orderBy: { match: { gameCreation: "desc" } },
     take: limit,
     skip: offset,
@@ -9,32 +15,34 @@ export function findMatches(limit: number, offset: number) {
   });
 }
 
-export function countMatches() {
-  return prisma.matchParticipant.count();
+export function countMatches(queue: QueueFilter) {
+  return prisma.matchParticipant.count({ where: byQueue(queue) });
 }
 
-export function countWins() {
-  return prisma.matchParticipant.count({ where: { win: true } });
+export function countWins(queue: QueueFilter) {
+  return prisma.matchParticipant.count({ where: { ...byQueue(queue), win: true } });
 }
 
-export function sumKda() {
+export function sumKda(queue: QueueFilter) {
   return prisma.matchParticipant.aggregate({
+    where: byQueue(queue),
     _sum: { kills: true, deaths: true, assists: true },
   });
 }
 
-export function statsByChampion() {
+export function statsByChampion(queue: QueueFilter) {
   return prisma.matchParticipant.groupBy({
     by: ["championId"],
+    where: byQueue(queue),
     _count: { _all: true },
     _sum: { kills: true, deaths: true, assists: true },
   });
 }
 
-export function winsByChampion() {
+export function winsByChampion(queue: QueueFilter) {
   return prisma.matchParticipant.groupBy({
     by: ["championId"],
-    where: { win: true },
+    where: { ...byQueue(queue), win: true },
     _count: { _all: true },
   });
 }
@@ -50,16 +58,18 @@ export function findScoreboard(matchId: string) {
   });
 }
 
-export function findLastMatches(last: number) {
+export function findLastMatches(last: number, queue: QueueFilter) {
   return prisma.matchParticipant.findMany({
+    where: byQueue(queue),
     orderBy: { match: { gameCreation: "desc" } },
     take: last,
     include: { match: true },
   });
 }
 
-export function findCoachMatches(last: number) {
+export function findCoachMatches(last: number, queue: QueueFilter) {
   return prisma.matchParticipant.findMany({
+    where: byQueue(queue),
     orderBy: { match: { gameCreation: "desc" } },
     take: last,
     include: { match: { include: { scoreboard: true } } },

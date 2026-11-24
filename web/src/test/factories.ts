@@ -3,6 +3,7 @@ import type { MatchItem } from "../api/types";
 export function makeMatch(overrides: Partial<MatchItem> = {}): MatchItem {
   return {
     matchId: "EUW1_1",
+    queue: "solo",
     playedAt: "2026-10-11T08:00:00.000Z",
     durationSeconds: 1800,
     champion: "Leona",

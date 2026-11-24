@@ -1,3 +1,4 @@
+import type { QueueFilter } from "../config/queues.js";
 import { HttpError } from "../middlewares/errorHandler.js";
 import * as matchRepository from "../repositories/matchRepository.js";
 import * as playerRepository from "../repositories/playerRepository.js";
@@ -257,14 +258,14 @@ export function buildWeeklyGoal(position: string, games: MatchMetrics[]) {
   };
 }
 
-export async function getCoachReport(last: number) {
+export async function getCoachReport(last: number, queue: QueueFilter) {
   const player = await playerRepository.findPlayer();
 
   if (!player) {
     throw new HttpError(404, "Todavía no hay datos: espera a la primera sincronización");
   }
 
-  const rows = await matchRepository.findCoachMatches(last);
+  const rows = await matchRepository.findCoachMatches(last, queue);
   const games = rows
     .map((row) =>
       buildMatchMetrics({

@@ -1,3 +1,4 @@
+import { RANKED_QUEUES } from "../config/queues.js";
 import { prisma } from "../db/prisma.js";
 import {
   getAccountByRiotId,
@@ -10,7 +11,7 @@ import { toScoreboardEntries } from "./scoreboard.js";
 
 const MIN_GAME_SECONDS = 300;
 
-export async function syncPlayer(gameName: string, tagLine: string) {
+export async function syncPlayer(gameName: string, tagLine: string, count = 20) {
   const account = await getAccountByRiotId(gameName, tagLine);
   const summoner = await getSummoner(account.puuid);
 
@@ -26,16 +27,22 @@ export async function syncPlayer(gameName: string, tagLine: string) {
     create: { puuid: account.puuid, ...playerData },
   });
 
+  const queues = Object.values(RANKED_QUEUES);
   const ranks = await getRankEntries(account.puuid);
-  const soloQ = ranks.find((entry) => entry.queueType === "RANKED_SOLO_5x5");
+  const rankedEntries = ranks.filter((entry) =>
+    queues.some((queue) => queue.queueType === entry.queueType),
+  );
 
-  if (soloQ) {
-    await prisma.rankSnapshot.create({
-      data: { puuid: account.puuid, ...soloQ },
+  if (rankedEntries.length > 0) {
+    await prisma.rankSnapshot.createMany({
+      data: rankedEntries.map((entry) => ({ puuid: account.puuid, ...entry })),
     });
   }
 
-  const matchIds = await getMatchIds(account.puuid, 20);
+  const matchIds: string[] = [];
+  for (const queue of queues) {
+    matchIds.push(...(await getMatchIds(account.puuid, queue.queueId, count)));
+  }
 
   const existing = await prisma.match.findMany({
     where: { matchId: { in: matchIds } },
@@ -79,5 +86,5 @@ export async function syncPlayer(gameName: string, tagLine: string) {
     saved++;
   }
 
-  return { newMatches: saved, rank: soloQ };
+  return { newMatches: saved, ranks: rankedEntries };
 }

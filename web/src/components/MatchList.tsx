@@ -178,6 +178,11 @@ function MatchRow({ match, isBest, order }: MatchRowProps) {
             <p className="flex items-center gap-1 text-meta text-muted">
               <PositionIcon position={match.position} className="size-3.5" />
               <span aria-hidden="true">{formatPosition(match.position)}</span>
+              {match.queue === "flex" && (
+                <span className="ml-1 rounded-ui bg-panel-2 px-1 text-caption font-bold uppercase">
+                  Flex
+                </span>
+              )}
             </p>
           </div>
         </div>

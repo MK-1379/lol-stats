@@ -39,15 +39,15 @@ describe("getCoachSummary", () => {
   it("responde 503 si no hay clave de la IA", async () => {
     vi.mocked(llmClient.isLlmConfigured).mockReturnValue(false);
 
-    await expect(getCoachSummary()).rejects.toMatchObject({ status: 503 });
+    await expect(getCoachSummary("all")).rejects.toMatchObject({ status: 503 });
     expect(llmClient.generateText).not.toHaveBeenCalled();
   });
 
   it("llama a la IA una sola vez al día", async () => {
     vi.mocked(llmClient.generateText).mockResolvedValue("Buen trabajo.");
 
-    const first = await getCoachSummary();
-    const second = await getCoachSummary();
+    const first = await getCoachSummary("all");
+    const second = await getCoachSummary("all");
 
     expect(first.text).toBe("Buen trabajo.");
     expect(second).toBe(first);
@@ -57,17 +57,29 @@ describe("getCoachSummary", () => {
   it("comparte la misma llamada si llegan dos peticiones a la vez", async () => {
     vi.mocked(llmClient.generateText).mockResolvedValue("Texto");
 
-    await Promise.all([getCoachSummary(), getCoachSummary()]);
+    await Promise.all([getCoachSummary("all"), getCoachSummary("all")]);
 
     expect(llmClient.generateText).toHaveBeenCalledTimes(1);
+  });
+
+  it("guarda un resumen distinto para cada cola", async () => {
+    vi.mocked(llmClient.generateText).mockResolvedValueOnce("Todas").mockResolvedValueOnce("Flex");
+
+    await expect(getCoachSummary("all")).resolves.toMatchObject({ text: "Todas" });
+    await expect(getCoachSummary("flex")).resolves.toMatchObject({ text: "Flex" });
+    await expect(getCoachSummary("all")).resolves.toMatchObject({ text: "Todas" });
+
+    expect(getCoachReport).toHaveBeenNthCalledWith(1, 20, "all");
+    expect(getCoachReport).toHaveBeenNthCalledWith(2, 20, "flex");
+    expect(llmClient.generateText).toHaveBeenCalledTimes(2);
   });
 
   it("responde 502 y no guarda nada si la IA falla", async () => {
     vi.mocked(llmClient.generateText).mockRejectedValueOnce(new Error("429"));
     vi.mocked(llmClient.generateText).mockResolvedValueOnce("Ahora sí");
 
-    await expect(getCoachSummary()).rejects.toMatchObject({ status: 502 });
-    await expect(getCoachSummary()).resolves.toMatchObject({ text: "Ahora sí" });
+    await expect(getCoachSummary("all")).rejects.toMatchObject({ status: 502 });
+    await expect(getCoachSummary("all")).resolves.toMatchObject({ text: "Ahora sí" });
   });
 });
 

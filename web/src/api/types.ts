@@ -1,22 +1,27 @@
+import type { RankedQueue } from "../utils/queue";
+
+export type RankInfo = {
+  queue: RankedQueue;
+  tier: string;
+  rank: string;
+  leaguePoints: number;
+  wins: number;
+  losses: number;
+  peak: {
+    tier: string;
+    rank: string;
+    leaguePoints: number;
+    reachedAt: string;
+  } | null;
+};
+
 export type Summary = {
   player: {
     gameName: string;
     tagLine: string;
     profileIconId: number;
   };
-  rank: {
-    tier: string;
-    rank: string;
-    leaguePoints: number;
-    wins: number;
-    losses: number;
-  } | null;
-  peakRank: {
-    tier: string;
-    rank: string;
-    leaguePoints: number;
-    reachedAt: string;
-  } | null;
+  ranks: RankInfo[];
   stats: {
     games: number;
     wins: number;
@@ -27,6 +32,7 @@ export type Summary = {
 
 export type MatchItem = {
   matchId: string;
+  queue: RankedQueue;
   playedAt: string;
   durationSeconds: number;
   champion: string;
