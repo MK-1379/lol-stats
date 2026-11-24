@@ -13,3 +13,4 @@ apiRouter.get("/matches/:matchId/scoreboard", statsController.getScoreboard);
 apiRouter.get("/champions", statsController.getChampions);
 apiRouter.get("/rank-history", statsController.getRankHistory);
 apiRouter.get("/trends", statsController.getTrends);
+apiRouter.get("/coach", statsController.getCoach);

@@ -11,6 +11,7 @@ vi.mock("../repositories/matchRepository.js", () => ({
   findChampionsByIds: vi.fn(),
   findLastMatches: vi.fn(),
   findScoreboard: vi.fn(),
+  findCoachMatches: vi.fn(),
 }));
 
 vi.mock("../repositories/playerRepository.js", () => ({
@@ -161,5 +162,21 @@ describe("API REST", () => {
 
     expect(response.status).toBe(500);
     expect(response.body).toEqual({ error: "Error interno del servidor" });
+  });
+  it("GET /api/coach rechaza last menor que 5 con 400", async () => {
+    const response = await request(app).get("/api/coach?last=2");
+
+    expect(response.status).toBe(400);
+    expect(matchRepository.findCoachMatches).not.toHaveBeenCalled();
+  });
+
+  it("GET /api/coach responde 404 si hay pocas partidas", async () => {
+    vi.mocked(playerRepository.findPlayer).mockResolvedValue({ puuid: "me" } as never);
+    vi.mocked(matchRepository.findCoachMatches).mockResolvedValue([]);
+
+    const response = await request(app).get("/api/coach");
+
+    expect(response.status).toBe(404);
+    expect(matchRepository.findCoachMatches).toHaveBeenCalledWith(20);
   });
 });

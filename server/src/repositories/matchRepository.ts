@@ -57,3 +57,11 @@ export function findLastMatches(last: number) {
     include: { match: true },
   });
 }
+
+export function findCoachMatches(last: number) {
+  return prisma.matchParticipant.findMany({
+    orderBy: { match: { gameCreation: "desc" } },
+    take: last,
+    include: { match: { include: { scoreboard: true } } },
+  });
+}
