@@ -98,3 +98,46 @@ export type Scoreboard = {
   matchId: string;
   teams: ScoreboardTeam[];
 };
+
+export type CoachMetric =
+  | "deaths"
+  | "csPerMinute"
+  | "visionPerMinute"
+  | "killParticipation"
+  | "csDiffPerMinute"
+  | "goldDiff";
+
+export type CoachDirection = "higher" | "lower";
+
+export type CoachStrength = {
+  metric: CoachMetric;
+  label: string;
+  direction: CoachDirection;
+  value: number;
+  target: number;
+};
+
+export type CoachTip = CoachStrength & {
+  advice: string;
+  inWins: number | null;
+  inLosses: number | null;
+};
+
+export type WeeklyGoal = {
+  metric: CoachMetric;
+  label: string;
+  direction: CoachDirection;
+  target: number;
+  outOf: number;
+  currentHits: number;
+  requiredHits: number;
+};
+
+export type CoachReport = {
+  position: string;
+  gamesAnalyzed: number;
+  winrate: number;
+  tips: CoachTip[];
+  strengths: CoachStrength[];
+  weeklyGoal: WeeklyGoal | null;
+};

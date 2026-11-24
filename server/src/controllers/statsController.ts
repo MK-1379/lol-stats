@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
+import * as coachService from "../services/coachService.js";
 import * as statsService from "../services/statsService.js";
 
 const matchesQuerySchema = z.object({
@@ -17,6 +18,10 @@ const rankHistoryQuerySchema = z.object({
 
 const trendsQuerySchema = z.object({
   last: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+const coachQuerySchema = z.object({
+  last: z.coerce.number().int().min(coachService.MIN_GAMES).max(100).default(20),
 });
 
 export async function getSummary(req: Request, res: Response) {
@@ -45,4 +50,9 @@ export async function getRankHistory(req: Request, res: Response) {
 export async function getTrends(req: Request, res: Response) {
   const { last } = trendsQuerySchema.parse(req.query);
   res.json(await statsService.getTrends(last));
+}
+
+export async function getCoach(req: Request, res: Response) {
+  const { last } = coachQuerySchema.parse(req.query);
+  res.json(await coachService.getCoachReport(last));
 }
