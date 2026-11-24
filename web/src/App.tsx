@@ -1,4 +1,5 @@
 import { ChampionPool } from "./components/ChampionPool";
+import { CoachPanel } from "./components/CoachPanel";
 import { ChampionsMini } from "./components/ChampionsMini";
 import { KdaChart } from "./components/charts/KdaChart";
 import { RankChart } from "./components/charts/RankChart";
@@ -15,7 +16,7 @@ import { useRecentMatches } from "./hooks/useMatches";
 import { useChampionStats } from "./hooks/useStats";
 import { useTab } from "./hooks/useTab";
 
-const TAB_IDS = ["resumen", "campeones", "rendimiento"] as const;
+const TAB_IDS = ["resumen", "campeones", "rendimiento", "coach"] as const;
 type TabId = (typeof TAB_IDS)[number];
 
 function App() {
@@ -41,6 +42,7 @@ function App() {
               { id: "resumen", label: "Resumen" },
               { id: "campeones", label: "Campeones", count: champions?.length },
               { id: "rendimiento", label: "Rendimiento" },
+              { id: "coach", label: "Coach" },
             ]}
           />
         }
@@ -66,6 +68,7 @@ function App() {
               <KdaChart />
             </div>
           )}
+          {tab === "coach" && <CoachPanel />}
         </div>
       </main>
       <Footer />
