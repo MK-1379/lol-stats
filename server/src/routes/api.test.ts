@@ -18,6 +18,7 @@ vi.mock("../repositories/playerRepository.js", () => ({
   findPlayer: vi.fn(),
   findLatestRank: vi.fn(),
   findRankHistory: vi.fn(),
+  findRankLevels: vi.fn(),
 }));
 
 import { createApp } from "../app.js";
@@ -60,6 +61,7 @@ describe("API REST", () => {
   it("GET /api/summary responde 404 si todavía no hay jugador", async () => {
     vi.mocked(playerRepository.findPlayer).mockResolvedValue(null);
     vi.mocked(playerRepository.findLatestRank).mockResolvedValue(null);
+    vi.mocked(playerRepository.findRankLevels).mockResolvedValue([] as never);
     vi.mocked(matchRepository.countMatches).mockResolvedValue(0);
     vi.mocked(matchRepository.countWins).mockResolvedValue(0);
     vi.mocked(matchRepository.sumKda).mockResolvedValue({
@@ -69,6 +71,41 @@ describe("API REST", () => {
     const response = await request(app).get("/api/summary");
 
     expect(response.status).toBe(404);
+  });
+
+  it("GET /api/summary incluye el peak con la fecha en que se alcanzó por primera vez", async () => {
+    vi.mocked(playerRepository.findPlayer).mockResolvedValue({
+      gameName: "M0n0kuum44",
+      tagLine: "SSJ",
+      profileIconId: 1,
+    } as never);
+    vi.mocked(playerRepository.findLatestRank).mockResolvedValue({
+      tier: "EMERALD",
+      rank: "III",
+      leaguePoints: 20,
+      wins: 10,
+      losses: 8,
+    } as never);
+    vi.mocked(playerRepository.findRankLevels).mockResolvedValue([
+      { tier: "EMERALD", rank: "III", leaguePoints: 20, _min: { takenAt: new Date("2026-11-20T10:00:00Z") } },
+      { tier: "EMERALD", rank: "II", leaguePoints: 45, _min: { takenAt: new Date("2026-11-10T10:00:00Z") } },
+      { tier: "PLATINUM", rank: "I", leaguePoints: 90, _min: { takenAt: new Date("2026-11-01T10:00:00Z") } },
+    ] as never);
+    vi.mocked(matchRepository.countMatches).mockResolvedValue(0);
+    vi.mocked(matchRepository.countWins).mockResolvedValue(0);
+    vi.mocked(matchRepository.sumKda).mockResolvedValue({
+      _sum: { kills: null, deaths: null, assists: null },
+    } as never);
+
+    const response = await request(app).get("/api/summary");
+
+    expect(response.status).toBe(200);
+    expect(response.body.peakRank).toEqual({
+      tier: "EMERALD",
+      rank: "II",
+      leaguePoints: 45,
+      reachedAt: "2026-11-10T10:00:00.000Z",
+    });
   });
 
   it("GET /api/champions calcula winrate y KDA por campeón", async () => {
