@@ -2,11 +2,11 @@
 
 [![CI](https://github.com/MK-1379/lol-stats/actions/workflows/ci.yml/badge.svg)](https://github.com/MK-1379/lol-stats/actions/workflows/ci.yml)
 
-A personal dashboard with my League of Legends Ranked Solo/Duo stats (EUW, **M0n0kuum44#SSJ**), built on the official Riot Games API.
+A personal React + TypeScript dashboard with my League of Legends ranked stats (Solo/Duo and Flex, EUW, **M0n0kuum44#SSJ**), built on the official Riot Games API.
 
 **Live demo:** https://lolstats-mk.duckdns.org
 
-A worker downloads my matches every 30 minutes and stores them in MySQL. A custom REST API computes the stats, and a React frontend displays them with a design inspired by stats sites like OP.GG. The browser never calls Riot: the API key only lives on the server.
+A worker downloads my matches, ranks and champion mastery every 30 minutes and stores them in MySQL. A custom REST API computes the stats, and a React frontend displays them with a design inspired by stats sites like OP.GG. The browser never calls Riot: the API key only lives on the server.
 
 ![Overview](docs/screenshots/overview.png)
 
@@ -16,13 +16,15 @@ A worker downloads my matches every 30 minutes and stores them in MySQL. A custo
 
 ## Features
 
-- **Overview:** current rank with its emblem, LP left until the next division, and form over the last 20 matches (win rate, average KDA and roles played).
+- **Queue filter:** a global SoloQ+Flex / SoloQ / Flex selector in the profile header. Every tab refetches its data for the chosen queue, and the choice is remembered.
+- **Overview:** current rank in each queue with its emblem, LP left until the next division and the peak rank reached, the top 3 champions by mastery points, and form over the last 20 matches (win rate, average KDA and roles played).
 - **Match history:** the last 100 matches, filterable by result and role.
 - **Performance score (0-10):** a custom formula that weighs KDA, deaths, farming or vision depending on the role, and the result, with a breakdown of each part.
 - **Scoreboard:** all 10 players of each match, with damage, gold, CS, vision, the MVP and a link to their OP.GG profile.
 - **Champions:** a table sortable by games, win rate or KDA, with search.
 - **Performance:** LP progression (7, 30 or 90 days) and KDA, CS/min and vision trends, each with an accessible table view.
-- Light and dark themes, responsive layout and keyboard navigation.
+- **Coach:** compares my stats with my lane opponent in each match (deaths, CS, vision, kill participation, gold) and suggests the 3 things to improve, my strengths and a weekly goal. An optional AI summary turns that report into a short text.
+- Light and dark themes, responsive layout, keyboard navigation and animations that respect "reduce motion".
 
 ## Architecture
 
@@ -40,11 +42,11 @@ Four services in Docker Compose:
 | Service | What it does | Local port |
 | --- | --- | --- |
 | `db` | MySQL 8.4 with a volume for the data | 3308 |
-| `worker` | Syncs player, rank, matches and scoreboards with node-cron | — |
-| `api` | REST API: `/api/summary`, `/matches`, `/matches/:id/scoreboard`, `/champions`, `/rank-history`, `/trends` | 3000 |
+| `worker` | Syncs player, ranks, matches, scoreboards and champion mastery with node-cron | — |
+| `api` | REST API: `/api/summary`, `/matches`, `/matches/:id/scoreboard`, `/champions`, `/masteries`, `/rank-history`, `/trends`, `/coach`, `/coach/summary` | 3000 |
 | `web` | nginx serves the React build and proxies `/api` to the `api` container | 8080 |
 
-The server is split into layers: `routes` → `controllers` (validation with Zod) → `services` (calculations) → `repositories` (queries with Prisma). `api` and `worker` share the same code and Docker image.
+Most endpoints accept `?queue=all|solo|flex`. The server is split into layers: `routes` → `controllers` (validation with Zod) → `services` (calculations) → `repositories` (queries with Prisma). `api` and `worker` share the same code and Docker image.
 
 ## Tech stack
 
@@ -66,7 +68,7 @@ Requirements: Docker with Docker Compose, Node.js 24 and a Riot API key ([develo
    cp .env.example .env
    ```
 
-   Fill in `.env` with your Riot API key, your Riot ID and the MySQL passwords. `DATABASE_URL` is the connection from your machine, for example `mysql://lolstats:change_me@localhost:3308/lolstats`, using the same password as `MYSQL_PASSWORD`.
+   Fill in `.env` with your Riot API key, your Riot ID and the MySQL passwords. `AI_API_KEY` is optional: without it the Coach tab works but hides the AI summary. `DATABASE_URL` is the connection from your machine, for example `mysql://lolstats:change_me@localhost:3308/lolstats`, using the same password as `MYSQL_PASSWORD`.
 
 2. Start the database and apply the migrations:
 
@@ -100,17 +102,17 @@ cd server && npm test
 cd web && npm test
 ```
 
-- **Server:** API tests with Supertest and mocked repositories, and Riot client tests with a mocked `fetch`.
-- **Web:** tests for the score formula, the formatters and the match history (filters, pagination and scoreboard loading) with Testing Library.
+- **Server (59 tests):** API tests with Supertest and mocked repositories, coach rules, and Riot and AI client tests with a mocked `fetch`.
+- **Web (65 tests):** the score formula, the formatters and components with Testing Library: match history (filters, pagination and scoreboard loading), rank card with peak, queue selector, coach panels and mastery block.
 
 On every push, GitHub Actions runs the linter, the tests and the build for both parts, and builds the Docker images. The tests don't need a real Riot API key.
 
 ## Design decisions
 
 - **A single account.** Riot's personal API key is meant for showing your own stats. Searching any player would need a production key.
-- **Rank snapshots.** Riot doesn't provide LP history, so the worker stores a snapshot of the rank on every sync and the chart is built from those snapshots.
+- **Rank snapshots.** Riot doesn't provide LP history, so the worker stores a snapshot of the rank on every sync. The LP chart and the peak rank are built from those snapshots, so the peak only covers the time since the worker started.
 - **The scoreboard has its own table** (`ScoreboardEntry`), so my own stats keep reading only my rows in `MatchParticipant`.
-- **The score isn't AI:** it's a transparent formula, and its breakdown can be checked on every match.
+- **The score and the coach tips aren't AI:** they're transparent rules that can be checked on every match. The AI only writes the summary, it's cached once per day and the app works without it.
 - Matches shorter than 5 minutes (remakes) aren't stored.
 
 ## Legal
