@@ -56,6 +56,10 @@ export async function getChampions(req: Request, res: Response) {
   res.json(await statsService.getChampionStats(queue));
 }
 
+export async function getMasteries(req: Request, res: Response) {
+  res.json(await statsService.getMasteries());
+}
+
 export async function getRankHistory(req: Request, res: Response) {
   const { days, queue } = rankHistoryQuerySchema.parse(req.query);
   res.json(await statsService.getRankHistory(days, queue));

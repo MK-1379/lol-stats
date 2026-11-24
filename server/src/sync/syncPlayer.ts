@@ -6,10 +6,12 @@ import {
   getRankEntries,
   getMatchIds,
   getMatch,
+  getTopMasteries,
 } from "../riot/riotClient.js";
 import { toScoreboardEntries } from "./scoreboard.js";
 
 const MIN_GAME_SECONDS = 300;
+const TOP_MASTERIES = 3;
 
 export async function syncPlayer(gameName: string, tagLine: string, count = 20) {
   const account = await getAccountByRiotId(gameName, tagLine);
@@ -86,5 +88,26 @@ export async function syncPlayer(gameName: string, tagLine: string, count = 20) 
     saved++;
   }
 
-  return { newMatches: saved, ranks: rankedEntries };
+  const masteries = await syncMasteries(account.puuid);
+
+  return { newMatches: saved, ranks: rankedEntries, masteries };
+}
+
+async function syncMasteries(puuid: string) {
+  const masteries = await getTopMasteries(puuid, TOP_MASTERIES);
+
+  await prisma.$transaction([
+    prisma.championMastery.deleteMany({ where: { puuid } }),
+    prisma.championMastery.createMany({
+      data: masteries.map((mastery) => ({
+        puuid,
+        championId: mastery.championId,
+        level: mastery.championLevel,
+        points: mastery.championPoints,
+        lastPlayedAt: new Date(mastery.lastPlayTime),
+      })),
+    }),
+  ]);
+
+  return masteries.length;
 }

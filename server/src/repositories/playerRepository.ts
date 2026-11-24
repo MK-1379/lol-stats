@@ -25,3 +25,10 @@ export function findRankLevels(queueType: string) {
     _min: { takenAt: true },
   });
 }
+
+export function findTopMasteries() {
+  return prisma.championMastery.findMany({
+    orderBy: { points: "desc" },
+    include: { champion: { select: { name: true } } },
+  });
+}

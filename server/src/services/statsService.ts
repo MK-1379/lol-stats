@@ -263,3 +263,15 @@ export async function getTrends(last: number, queue: QueueFilter) {
     visionScore: row.visionScore,
   }));
 }
+
+export async function getMasteries() {
+  const rows = await playerRepository.findTopMasteries();
+
+  return rows.map((row) => ({
+    championId: row.championId,
+    champion: row.champion.name,
+    level: row.level,
+    points: row.points,
+    lastPlayedAt: row.lastPlayedAt,
+  }));
+}

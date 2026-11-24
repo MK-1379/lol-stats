@@ -1,6 +1,6 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { fetchJson } from "../api/client";
-import type { ChampionStat, RankPoint, TrendPoint } from "../api/types";
+import type { ChampionMastery, ChampionStat, RankPoint, TrendPoint } from "../api/types";
 import { rankHistoryQueue } from "../utils/queue";
 import { useQueue } from "./useQueue";
 
@@ -26,5 +26,12 @@ export function useTrends(last = 20) {
   return useQuery({
     queryKey: ["trends", last, queue],
     queryFn: () => fetchJson<TrendPoint[]>(`/api/trends?last=${last}&queue=${queue}`),
+  });
+}
+
+export function useMasteries() {
+  return useQuery({
+    queryKey: ["masteries"],
+    queryFn: () => fetchJson<ChampionMastery[]>("/api/masteries"),
   });
 }

@@ -70,6 +70,14 @@ export type ChampionStat = {
   kda: number;
 };
 
+export type ChampionMastery = {
+  championId: number;
+  champion: string;
+  level: number;
+  points: number;
+  lastPlayedAt: string;
+};
+
 export type TrendPoint = {
   matchId: string;
   playedAt: string;

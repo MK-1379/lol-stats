@@ -17,6 +17,7 @@ model Player {
 
   participations MatchParticipant[]
   rankSnapshots  RankSnapshot[]
+  masteries      ChampionMastery[]
 }
 
 model Champion {
@@ -26,6 +27,7 @@ model Champion {
 
   participations    MatchParticipant[]
   scoreboardEntries ScoreboardEntry[]
+  masteries         ChampionMastery[]
 }
 
 model Match {
@@ -99,4 +101,18 @@ model RankSnapshot {
   player Player @relation(fields: [puuid], references: [puuid])
 
   @@index([puuid, takenAt])
+}
+
+model ChampionMastery {
+  puuid        String   @db.VarChar(78)
+  championId   Int
+  level        Int
+  points       Int
+  lastPlayedAt DateTime
+  updatedAt    DateTime @updatedAt
+
+  player   Player   @relation(fields: [puuid], references: [puuid])
+  champion Champion @relation(fields: [championId], references: [id])
+
+  @@id([puuid, championId])
 }
