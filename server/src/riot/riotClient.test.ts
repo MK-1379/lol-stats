@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getSummoner, RiotApiError } from "./riotClient.js";
+import { getSummoner, getTopMasteries, RiotApiError } from "./riotClient.js";
 
 const fetchMock = vi.fn();
 
@@ -69,5 +69,19 @@ describe("riotClient", () => {
     );
 
     await expect(getSummoner("puuid-test")).rejects.toThrow();
+  });
+
+  it("pide las maestrías top por PUUID al servidor de plataforma", async () => {
+    const masteries = [
+      { championId: 238, championLevel: 97, championPoints: 1054721, lastPlayTime: 1763920800000 },
+    ];
+    fetchMock.mockResolvedValueOnce(jsonResponse(masteries));
+
+    await expect(getTopMasteries("puuid-test", 3)).resolves.toEqual(masteries);
+
+    const [url] = fetchMock.mock.calls[0];
+    expect(url).toBe(
+      "https://euw1.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/puuid-test/top?count=3",
+    );
   });
 });

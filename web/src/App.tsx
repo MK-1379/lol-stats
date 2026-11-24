@@ -5,6 +5,7 @@ import { KdaChart } from "./components/charts/KdaChart";
 import { RankChart } from "./components/charts/RankChart";
 import { Footer } from "./components/layout/Footer";
 import { Header } from "./components/layout/Header";
+import { MasteryCard } from "./components/MasteryCard";
 import { MatchList } from "./components/MatchList";
 import { ProfileHeader } from "./components/ProfileHeader";
 import { RankCard } from "./components/RankCard";
@@ -84,6 +85,9 @@ function SummaryTab({ onShowChampions }: { onShowChampions: () => void }) {
       <div className="contents lg:grid lg:gap-gap">
         <div className="order-1 lg:order-none">
           <RankCard />
+        </div>
+        <div className="order-3 lg:order-none">
+          <MasteryCard />
         </div>
         <div className="order-3 lg:order-none">
           <ChampionsMini onShowAll={onShowChampions} />

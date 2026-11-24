@@ -92,6 +92,15 @@ const leagueEntriesSchema = z.array(
   }),
 );
 
+const masteriesSchema = z.array(
+  z.object({
+    championId: z.number(),
+    championLevel: z.number(),
+    championPoints: z.number(),
+    lastPlayTime: z.number(),
+  }),
+);
+
 const summonerSchema = z.object({
   profileIconId: z.number(),
   summonerLevel: z.number(),
@@ -123,4 +132,9 @@ export function getRankEntries(puuid: string) {
 export function getSummoner(puuid: string) {
   const url = `${PLATFORM}/lol/summoner/v4/summoners/by-puuid/${puuid}`;
   return riotFetch(url, summonerSchema);
+}
+
+export function getTopMasteries(puuid: string, count: number) {
+  const url = `${PLATFORM}/lol/champion-mastery/v4/champion-masteries/by-puuid/${puuid}/top?count=${count}`;
+  return riotFetch(url, masteriesSchema);
 }

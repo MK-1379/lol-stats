@@ -19,6 +19,7 @@ vi.mock("../repositories/playerRepository.js", () => ({
   findLatestRank: vi.fn(),
   findRankHistory: vi.fn(),
   findRankLevels: vi.fn(),
+  findTopMasteries: vi.fn(),
 }));
 
 import { createApp } from "../app.js";
@@ -136,6 +137,40 @@ describe("API REST", () => {
       { queue: "flex", tier: "GOLD", rank: "I", leaguePoints: 10, wins: 3, losses: 2, peak: null },
     ]);
     expect(matchRepository.countMatches).toHaveBeenCalledWith("all");
+  });
+
+  it("GET /api/masteries devuelve las maestrías con el nombre del campeón", async () => {
+    vi.mocked(playerRepository.findTopMasteries).mockResolvedValue([
+      {
+        championId: 238,
+        level: 97,
+        points: 1054721,
+        lastPlayedAt: new Date("2026-11-23T18:00:00Z"),
+        champion: { name: "Zed" },
+      },
+    ] as never);
+
+    const response = await request(app).get("/api/masteries");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual([
+      {
+        championId: 238,
+        champion: "Zed",
+        level: 97,
+        points: 1054721,
+        lastPlayedAt: "2026-11-23T18:00:00.000Z",
+      },
+    ]);
+  });
+
+  it("GET /api/masteries devuelve una lista vacía si aún no se han sincronizado", async () => {
+    vi.mocked(playerRepository.findTopMasteries).mockResolvedValue([]);
+
+    const response = await request(app).get("/api/masteries");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual([]);
   });
 
   it("GET /api/matches rechaza una cola desconocida con 400", async () => {

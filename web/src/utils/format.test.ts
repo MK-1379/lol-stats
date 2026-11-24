@@ -4,7 +4,9 @@ import {
   championSplashUrl,
   csPerMinute,
   formatDuration,
+  formatPoints,
   formatPosition,
+  masteryColor,
   nextDivision,
   opggUrl,
   tierColor,
@@ -75,5 +77,21 @@ describe("tierColor", () => {
   it("devuelve el color del rango o el dorado si no hay rango", () => {
     expect(tierColor("DIAMOND")).toBe("#6c8cf0");
     expect(tierColor(undefined)).toBe("var(--gold)");
+  });
+});
+
+describe("formatPoints", () => {
+  it("separa los miles con puntos aunque el número tenga solo cuatro cifras", () => {
+    expect(formatPoints(1054721)).toBe("1.054.721 pts");
+    expect(formatPoints(4500)).toBe("4.500 pts");
+  });
+});
+
+describe("masteryColor", () => {
+  it("cambia de color en los niveles 5 y 10", () => {
+    expect(masteryColor(4)).toBe(masteryColor(1));
+    expect(masteryColor(5)).not.toBe(masteryColor(4));
+    expect(masteryColor(10)).not.toBe(masteryColor(9));
+    expect(masteryColor(97)).toBe(masteryColor(10));
   });
 });

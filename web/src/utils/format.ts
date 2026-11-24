@@ -152,6 +152,18 @@ export function tierColor(tier?: string) {
   return (tier && TIER_COLORS[tier]) ?? "var(--gold)";
 }
 
+const pointsFormatter = new Intl.NumberFormat("es-ES", { useGrouping: "always" });
+
+export function formatPoints(points: number) {
+  return `${pointsFormatter.format(points)} pts`;
+}
+
+export function masteryColor(level: number) {
+  if (level >= 10) return "#d8ab4f";
+  if (level >= 5) return "#9aa8b4";
+  return "#b0703a";
+}
+
 export function kdaTone(kda: number) {
   if (kda >= 4) return "text-perf-4";
   if (kda >= 3) return "text-perf-3";
