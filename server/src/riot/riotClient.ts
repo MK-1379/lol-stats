@@ -51,7 +51,13 @@ const accountSchema = z.object({
   tagLine: z.string(),
 });
 
+const perkStyleSchema = z.object({
+  style: z.number(),
+  selections: z.array(z.object({ perk: z.number() })),
+});
+
 const participantSchema = z.object({
+  participantId: z.number(),
   puuid: z.string(),
   riotIdGameName: z.string().default(""),
   riotIdTagline: z.string().default(""),
@@ -69,6 +75,22 @@ const participantSchema = z.object({
   totalMinionsKilled: z.number(),
   neutralMinionsKilled: z.number(),
   visionScore: z.number(),
+  summoner1Id: z.number(),
+  summoner2Id: z.number(),
+  item0: z.number(),
+  item1: z.number(),
+  item2: z.number(),
+  item3: z.number(),
+  item4: z.number(),
+  item5: z.number(),
+  perks: z.object({
+    statPerks: z.object({
+      offense: z.number(),
+      flex: z.number(),
+      defense: z.number(),
+    }),
+    styles: z.tuple([perkStyleSchema, perkStyleSchema]),
+  }),
 });
 
 const matchSchema = z.object({
@@ -76,8 +98,29 @@ const matchSchema = z.object({
   info: z.object({
     gameCreation: z.number(),
     gameDuration: z.number(),
+    gameVersion: z.string(),
     queueId: z.number(),
     participants: z.array(participantSchema),
+  }),
+});
+
+const timelineSchema = z.object({
+  info: z.object({
+    frames: z.array(
+      z.object({
+        events: z.array(
+          z.object({
+            type: z.string(),
+            timestamp: z.number(),
+            participantId: z.number().optional(),
+            itemId: z.number().optional(),
+            beforeId: z.number().optional(),
+            skillSlot: z.number().optional(),
+            levelUpType: z.string().optional(),
+          }),
+        ),
+      }),
+    ),
   }),
 });
 
@@ -101,6 +144,10 @@ const masteriesSchema = z.array(
   }),
 );
 
+const apexLeagueSchema = z.object({
+  entries: z.array(z.object({ puuid: z.string(), leaguePoints: z.number() })),
+});
+
 const summonerSchema = z.object({
   profileIconId: z.number(),
   summonerLevel: z.number(),
@@ -108,6 +155,10 @@ const summonerSchema = z.object({
 
 export type RiotAccount = z.infer<typeof accountSchema>;
 export type RiotMatch = z.infer<typeof matchSchema>;
+export type RiotParticipant = RiotMatch["info"]["participants"][number];
+export type RiotTimeline = z.infer<typeof timelineSchema>;
+export type RiotTimelineEvent =
+  RiotTimeline["info"]["frames"][number]["events"][number];
 
 export function getAccountByRiotId(gameName: string, tagLine: string) {
   const url = `${REGIONAL}/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`;
@@ -124,9 +175,22 @@ export function getMatch(matchId: string) {
   return riotFetch(url, matchSchema);
 }
 
+export function getMatchTimeline(matchId: string) {
+  const url = `${REGIONAL}/lol/match/v5/matches/${matchId}/timeline`;
+  return riotFetch(url, timelineSchema);
+}
+
 export function getRankEntries(puuid: string) {
   const url = `${PLATFORM}/lol/league/v4/entries/by-puuid/${puuid}`;
   return riotFetch(url, leagueEntriesSchema);
+}
+
+export const APEX_TIERS = ["challenger", "grandmaster", "master"] as const;
+export type ApexTier = (typeof APEX_TIERS)[number];
+
+export function getApexLeague(tier: ApexTier) {
+  const url = `${PLATFORM}/lol/league/v4/${tier}leagues/by-queue/RANKED_SOLO_5x5`;
+  return riotFetch(url, apexLeagueSchema);
 }
 
 export function getSummoner(puuid: string) {
