@@ -3,6 +3,8 @@ import { env } from "./config/env.js";
 import { syncChampions } from "./sync/syncChampions.js";
 import { syncPlayer } from "./sync/syncPlayer.js";
 import { syncScoreboards } from "./sync/scoreboard.js";
+import { syncOwnBuilds } from "./sync/syncBuilds.js";
+import { syncHighEloBuilds } from "./sync/syncHighElo.js";
 
 async function runChampionSync() {
   try {
@@ -23,8 +25,23 @@ async function runPlayerSync() {
     if (scoreboards.filled > 0) {
       console.log(`[worker] Marcadores completados: ${scoreboards.filled}`);
     }
+    const builds = await syncOwnBuilds();
+    if (builds.filled > 0) {
+      console.log(`[worker] Builds guardadas: ${builds.filled}`);
+    }
   } catch (error) {
     console.error("[worker] Error sincronizando el jugador:", error);
+  }
+}
+
+async function runHighEloSync() {
+  try {
+    const result = await syncHighEloBuilds(env.HIGH_ELO_MATCHES_PER_RUN);
+    console.log(
+      `[worker] Alto elo: ${result.saved} partidas nuevas de ${result.players} jugadores, ${result.pruned} borradas`,
+    );
+  } catch (error) {
+    console.error("[worker] Error recogiendo partidas de alto elo:", error);
   }
 }
 
@@ -34,5 +51,7 @@ await runChampionSync();
 await runPlayerSync();
 
 cron.schedule("*/30 * * * *", runPlayerSync);
+
+cron.schedule("15 * * * *", runHighEloSync);
 
 cron.schedule("0 4 * * *", runChampionSync);

@@ -14,6 +14,7 @@ const envSchema = z.object({
   AI_API_KEY: z.string().default(""),
   AI_BASE_URL: z.string().url().default("https://api.groq.com/openai/v1"),
   AI_MODEL: z.string().default("openai/gpt-oss-120b"),
+  HIGH_ELO_MATCHES_PER_RUN: z.coerce.number().int().min(0).max(40).default(20),
 });
 
 export const env = envSchema.parse(process.env);
