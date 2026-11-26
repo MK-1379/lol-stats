@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { ChampionStat } from "../api/types";
 import { useChampionStats } from "../hooks/useStats";
 import { kdaTone, winrateTone } from "../utils/format";
+import { ChampionBuildLink } from "./ChampionBuildLink";
 import { ChampionIcon } from "./ChampionIcon";
 import { Panel } from "./ui/Panel";
 import { StateMessage } from "./ui/StateMessage";
@@ -135,7 +136,9 @@ function ChampionRow({ champion, position }: { champion: ChampionStat; position:
       </td>
       <td className="py-2 pl-3 sm:pl-2">
         <div className="flex items-center gap-2 sm:gap-3">
-          <ChampionIcon name={champion.champion} size="sm" />
+          <ChampionBuildLink champion={champion.champion}>
+            <ChampionIcon name={champion.champion} size="sm" />
+          </ChampionBuildLink>
           <span className="font-semibold whitespace-nowrap">{champion.champion}</span>
         </div>
       </td>

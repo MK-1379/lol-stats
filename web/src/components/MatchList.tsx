@@ -9,6 +9,7 @@ import {
   kdaTone,
 } from "../utils/format";
 import { performanceScore, scoreTone } from "../utils/score";
+import { ChampionBuildLink } from "./ChampionBuildLink";
 import { ChampionIcon } from "./ChampionIcon";
 import { Scoreboard } from "./Scoreboard";
 import { Panel } from "./ui/Panel";
@@ -172,7 +173,9 @@ function MatchRow({ match, isBest, order }: MatchRowProps) {
         </div>
 
         <div className="col-start-1 row-start-1 flex min-w-0 items-center gap-2.5 sm:col-start-2 sm:gap-3">
-          <ChampionIcon name={match.champion} size="row" />
+          <ChampionBuildLink champion={match.champion}>
+            <ChampionIcon name={match.champion} size="row" />
+          </ChampionBuildLink>
           <div className="min-w-0">
             <p className="truncate font-semibold">{match.champion}</p>
             <p className="flex items-center gap-1 text-meta text-muted">

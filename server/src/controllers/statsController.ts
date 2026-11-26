@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
 import { QUEUE_FILTERS } from "../config/queues.js";
+import * as buildService from "../services/buildService.js";
 import * as coachService from "../services/coachService.js";
 import * as coachSummaryService from "../services/coachSummaryService.js";
 import * as statsService from "../services/statsService.js";
@@ -34,6 +35,14 @@ const trendsQuerySchema = z.object({
 const coachQuerySchema = z.object({
   queue: queueSchema,
   last: z.coerce.number().int().min(coachService.MIN_GAMES).max(100).default(20),
+});
+
+const buildParamsSchema = z.object({
+  championKey: z.string().max(30).regex(/^[A-Za-z]+$/),
+});
+
+const buildQuerySchema = z.object({
+  position: z.enum(buildService.POSITIONS).optional(),
 });
 
 export async function getSummary(req: Request, res: Response) {
@@ -78,4 +87,10 @@ export async function getCoach(req: Request, res: Response) {
 export async function getCoachSummary(req: Request, res: Response) {
   const { queue } = queueQuerySchema.parse(req.query);
   res.json(await coachSummaryService.getCoachSummary(queue));
+}
+
+export async function getChampionBuild(req: Request, res: Response) {
+  const { championKey } = buildParamsSchema.parse(req.params);
+  const { position } = buildQuerySchema.parse(req.query);
+  res.json(await buildService.getChampionBuild(championKey, position));
 }

@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { useMasteries } from "../hooks/useStats";
 import { formatPoints } from "../utils/format";
+import { ChampionBuildLink } from "./ChampionBuildLink";
 import { ChampionIcon } from "./ChampionIcon";
 import { MasteryEmblem } from "./MasteryEmblem";
 import { Panel } from "./ui/Panel";
@@ -28,7 +29,9 @@ export function MasteryCard() {
               className="flex flex-col items-center gap-1.5 text-center motion-safe:animate-rise"
               style={{ "--stagger": `${index * 80}ms` } as CSSProperties}
             >
-              <ChampionIcon name={mastery.champion} size="lg" />
+              <ChampionBuildLink champion={mastery.champion}>
+                <ChampionIcon name={mastery.champion} size="lg" />
+              </ChampionBuildLink>
               <MasteryEmblem level={mastery.level} />
               <p className="mt-1 w-full truncate font-semibold">{mastery.champion}</p>
               <p className="text-meta text-muted tabular-nums">{formatPoints(mastery.points)}</p>

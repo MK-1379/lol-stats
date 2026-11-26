@@ -28,6 +28,7 @@ model Champion {
   participations    MatchParticipant[]
   scoreboardEntries ScoreboardEntry[]
   masteries         ChampionMastery[]
+  buildSamples      BuildSample[]
 }
 
 model Match {
@@ -115,4 +116,41 @@ model ChampionMastery {
   champion Champion @relation(fields: [championId], references: [id])
 
   @@id([puuid, championId])
+}
+
+model BuildMatch {
+  matchId      String   @id @db.VarChar(30)
+  source       String   @db.VarChar(10)
+  patch        String   @db.VarChar(10)
+  queueId      Int
+  gameCreation DateTime
+
+  samples BuildSample[]
+
+  @@index([source, patch])
+}
+
+model BuildSample {
+  id           Int     @id @default(autoincrement())
+  matchId      String  @db.VarChar(30)
+  puuid        String  @db.VarChar(78)
+  championId   Int
+  teamPosition String
+  win          Boolean
+  spell1       Int
+  spell2       Int
+  primaryStyle Int
+  subStyle     Int
+  perks        Json
+  shards       Json
+  startItems   Json
+  itemOrder    Json
+  finalItems   Json
+  skillOrder   String  @db.VarChar(18)
+
+  match    BuildMatch @relation(fields: [matchId], references: [matchId], onDelete: Cascade)
+  champion Champion   @relation(fields: [championId], references: [id])
+
+  @@unique([matchId, puuid])
+  @@index([championId, teamPosition])
 }

@@ -1,5 +1,6 @@
 import { useChampionStats } from "../hooks/useStats";
 import { kdaTone, winrateTone } from "../utils/format";
+import { ChampionBuildLink } from "./ChampionBuildLink";
 import { ChampionIcon } from "./ChampionIcon";
 import { Panel } from "./ui/Panel";
 import { StateMessage } from "./ui/StateMessage";
@@ -22,7 +23,9 @@ export function ChampionsMini({ onShowAll }: { onShowAll: () => void }) {
           <ul className="divide-y divide-line">
             {data.slice(0, VISIBLE).map((champion) => (
               <li key={champion.championId} className="flex items-center gap-3 px-panel py-2">
-                <ChampionIcon name={champion.champion} />
+                <ChampionBuildLink champion={champion.champion}>
+                  <ChampionIcon name={champion.champion} />
+                </ChampionBuildLink>
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold">{champion.champion}</p>
                   <p className={`text-meta font-semibold tabular-nums ${kdaTone(champion.kda)}`}>
