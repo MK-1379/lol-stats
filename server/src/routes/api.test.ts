@@ -22,7 +22,18 @@ vi.mock("../repositories/playerRepository.js", () => ({
   findTopMasteries: vi.fn(),
 }));
 
+vi.mock("../repositories/buildRepository.js", () => ({
+  findChampionByKey: vi.fn(),
+  findBuildSamples: vi.fn(),
+}));
+
+vi.mock("../ddragon/staticData.js", () => ({
+  getStaticData: vi.fn(),
+}));
+
 import { createApp } from "../app.js";
+import { getStaticData } from "../ddragon/staticData.js";
+import * as buildRepository from "../repositories/buildRepository.js";
 import * as matchRepository from "../repositories/matchRepository.js";
 import * as playerRepository from "../repositories/playerRepository.js";
 
@@ -310,5 +321,65 @@ describe("API REST", () => {
 
     expect(response.status).toBe(404);
     expect(matchRepository.findCoachMatches).toHaveBeenCalledWith(20, "all");
+  });
+
+  it("GET /api/champions/:key/build responde 404 si el campeón no existe", async () => {
+    vi.mocked(buildRepository.findChampionByKey).mockResolvedValue(null);
+
+    const response = await request(app).get("/api/champions/Noexiste/build");
+
+    expect(response.status).toBe(404);
+  });
+
+  it("GET /api/champions/:key/build rechaza una posición desconocida con 400", async () => {
+    const response = await request(app).get("/api/champions/Nami/build?position=SUPP");
+
+    expect(response.status).toBe(400);
+    expect(buildRepository.findChampionByKey).not.toHaveBeenCalled();
+  });
+
+  it("GET /api/champions/:key/build usa la posición más jugada por defecto", async () => {
+    vi.mocked(buildRepository.findChampionByKey).mockResolvedValue({
+      id: 267,
+      key: "Nami",
+      name: "Nami",
+    });
+    vi.mocked(buildRepository.findBuildSamples).mockResolvedValue([
+      {
+        teamPosition: "UTILITY",
+        win: true,
+        spell1: 4,
+        spell2: 14,
+        primaryStyle: 8200,
+        subStyle: 8300,
+        perks: [8214, 8226, 8210, 8237, 8345, 8352],
+        shards: [5008, 5008, 5011],
+        startItems: [3850],
+        itemOrder: [3158],
+        skillOrder: "WQE",
+        match: { source: "own", patch: "16.20" },
+      },
+    ]);
+    vi.mocked(getStaticData).mockResolvedValue({
+      version: "16.20.1",
+      items: new Map([[3158, { id: 3158, name: "Botas jonias", icon: "boots.png", kind: "boots" }]]),
+      runes: new Map(),
+      spells: new Map([[4, { id: 4, name: "Destello", icon: "flash.png" }]]),
+    });
+
+    const response = await request(app).get("/api/champions/nami/build");
+
+    expect(response.status).toBe(200);
+    expect(buildRepository.findChampionByKey).toHaveBeenCalledWith("nami");
+    expect(response.body).toMatchObject({
+      champion: { key: "Nami" },
+      position: "UTILITY",
+      games: 1,
+      sources: { own: 1, highElo: 0 },
+      patches: ["16.20"],
+      boots: [{ games: 1, value: { name: "Botas jonias" } }],
+    });
+    expect(response.body.spells[0].value[0].name).toBe("Destello");
+    expect(response.body.spells[0].value[1].name).toBe("#14");
   });
 });
