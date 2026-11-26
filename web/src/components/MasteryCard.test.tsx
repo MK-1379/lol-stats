@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ChampionMastery } from "../api/types";
 import { MasteryCard } from "./MasteryCard";
@@ -20,7 +21,9 @@ function renderWithMasteries(body: ChampionMastery[]) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
-      <MasteryCard />
+      <MemoryRouter>
+        <MasteryCard />
+      </MemoryRouter>
     </QueryClientProvider>,
   );
 }
@@ -39,6 +42,13 @@ describe("MasteryCard", () => {
     expect(items[0]).toHaveTextContent("1.054.721 pts");
     expect(screen.getByRole("img", { name: "Maestría nivel 97" })).toBeInTheDocument();
     expect(items[2]).toHaveTextContent("Vayne");
+  });
+
+  it("enlaza cada campeón con su página de build", async () => {
+    renderWithMasteries(masteries);
+
+    const link = await screen.findByRole("link", { name: "Ver build de Zed" });
+    expect(link).toHaveAttribute("href", "/campeon/Zed");
   });
 
   it("avisa cuando todavía no hay maestrías sincronizadas", async () => {

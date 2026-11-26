@@ -3,6 +3,7 @@ import type { ScoreboardPlayer, ScoreboardTeam } from "../api/types";
 import { useScoreboard } from "../hooks/useScoreboard";
 import { csPerMinute, formatPosition, kdaTone, opggUrl } from "../utils/format";
 import { performanceScore, scoreTone } from "../utils/score";
+import { ChampionBuildLink } from "./ChampionBuildLink";
 import { ChampionIcon } from "./ChampionIcon";
 import { StateMessage } from "./ui/StateMessage";
 
@@ -132,7 +133,9 @@ function PlayerRow({ order, player, score, isMvp, maxDamage, durationSeconds }: 
       <th scope="row" className="py-1.5 pr-2 pl-1.5 text-left font-normal">
         <span className="flex min-w-0 items-center gap-2">
           <span className="relative shrink-0">
-            <ChampionIcon name={player.champion} size="sm" />
+            <ChampionBuildLink champion={player.champion}>
+              <ChampionIcon name={player.champion} size="sm" />
+            </ChampionBuildLink>
             <span
               aria-hidden="true"
               title="Nivel"

@@ -123,12 +123,16 @@ const CHAMPION_KEY_EXCEPTIONS: Record<string, string> = {
   LeBlanc: "Leblanc",
 };
 
-function championKey(championName: string) {
+export function championKey(championName: string) {
   return CHAMPION_KEY_EXCEPTIONS[championName] ?? championName.replace(/[^A-Za-z0-9]/g, "");
 }
 
 export function championIconUrl(championName: string) {
   return `https://ddragon.leagueoflegends.com/cdn/${DDRAGON_VERSION}/img/champion/${championKey(championName)}.png`;
+}
+
+export function championBuildPath(championName: string) {
+  return `/campeon/${championKey(championName)}`;
 }
 
 export function championSplashUrl(championName: string) {

@@ -167,3 +167,49 @@ export type CoachSummary = {
   generatedAt: string;
   model: string;
 };
+
+export type GameEntry = {
+  id: number;
+  name: string;
+  icon: string;
+};
+
+export type BuildOption<T> = {
+  value: T;
+  games: number;
+  wins: number;
+  winrate: number;
+};
+
+export type RunePage = {
+  primary: GameEntry;
+  secondary: GameEntry;
+  perks: GameEntry[];
+  shards: GameEntry[];
+};
+
+export type SkillOrder = {
+  priority: string;
+  sequence: string | null;
+  games: number;
+  winrate: number;
+};
+
+export type ChampionBuild = {
+  champion: { id: number; key: string; name: string };
+  version: string;
+  position: string | null;
+  positions: { position: string; games: number }[];
+  games: number;
+  wins: number;
+  winrate: number;
+  sources: { own: number; highElo: number };
+  patches: string[];
+  runes: BuildOption<RunePage>[];
+  spells: BuildOption<GameEntry[]>[];
+  startItems: BuildOption<GameEntry[]>[];
+  boots: BuildOption<GameEntry>[];
+  coreItems: BuildOption<GameEntry[]>[];
+  lateItems: BuildOption<GameEntry>[];
+  skills: SkillOrder | null;
+};

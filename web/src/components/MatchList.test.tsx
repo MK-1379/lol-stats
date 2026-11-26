@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Scoreboard } from "../api/types";
 import { makeMatch } from "../test/factories";
@@ -16,7 +17,9 @@ function renderList(items = matches) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MatchList matches={items} />
+      <MemoryRouter>
+        <MatchList matches={items} />
+      </MemoryRouter>
     </QueryClientProvider>,
   );
 }

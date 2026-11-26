@@ -4,9 +4,10 @@ import type { ChampionStat } from "../api/types";
 import { useQueue } from "../hooks/useQueue";
 import { useSummary } from "../hooks/useSummary";
 import { useChampionStats, useRankHistory } from "../hooks/useStats";
-import { championSplashUrl, formatRelative, profileIconUrl, tierColor } from "../utils/format";
+import { formatRelative, profileIconUrl, tierColor } from "../utils/format";
 import { QUEUE_OPTIONS } from "../utils/queue";
 import { SegmentedControl } from "./ui/SegmentedControl";
+import { SplashBanner } from "./ui/SplashBanner";
 
 type ProfileHeaderProps = {
   tabs: ReactNode;
@@ -24,7 +25,7 @@ export function ProfileHeader({ tabs }: ProfileHeaderProps) {
 
   return (
     <div className="relative isolate overflow-hidden border-b border-line bg-panel">
-      {main && <Banner champion={main} />}
+      {main && <SplashBanner champion={main} />}
       <div className="mx-auto max-w-[1080px] px-4 pt-5">
         {isPending ? (
           <div role="status" className="flex flex-wrap items-center gap-x-4 gap-y-3 pb-5">
@@ -80,26 +81,6 @@ function mostPlayed(champions: ChampionStat[] = []) {
     (best, champion) => (!best || champion.games > best.games ? champion : best),
     null,
   )?.champion;
-}
-
-function Banner({ champion }: { champion: string }) {
-  const [loaded, setLoaded] = useState(false);
-  const [failed, setFailed] = useState(false);
-
-  if (failed) return null;
-
-  return (
-    <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
-      <img
-        src={championSplashUrl(champion)}
-        alt=""
-        onLoad={() => setLoaded(true)}
-        onError={() => setFailed(true)}
-        className={`absolute inset-y-0 right-0 h-full w-full object-cover object-[50%_20%] transition-opacity duration-700 [mask-image:linear-gradient(to_right,transparent,black_60%)] sm:w-3/4 sm:[mask-image:linear-gradient(to_right,transparent,black_45%)] ${loaded ? "opacity-(--banner-opacity) motion-safe:animate-banner-in" : "opacity-0"}`}
-      />
-      <div className="absolute inset-0 bg-linear-to-t from-panel via-panel/40 to-transparent" />
-    </div>
-  );
 }
 
 function ProfileIcon({ iconId, name, tier }: { iconId: number; name: string; tier?: string }) {
